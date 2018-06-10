@@ -64,6 +64,7 @@ The functions of libsndfile are defined as follows:
 
       SNDFILE*    <A HREF="#open">sf_open</A>          (const char *path, int mode, SF_INFO *sfinfo) ;
       SNDFILE*    <A HREF="#open">sf_wchar_open</A>    (LPCWSTR wpath, int mode, SF_INFO *sfinfo) ;
+      SNDFILE*    <A HREF="#open">sf_utf8_open</A>     (const char *path, int mode, SF_INFO *sfinfo) ;
       SNDFILE*    <A HREF="#open_fd">sf_open_fd</A>       (int fd, int mode, SF_INFO *sfinfo, int close_desc) ;
       SNDFILE* 	  <A HREF="#open_virtual">sf_open_virtual</A>  (SF_VIRTUAL_IO *sfvirtual, int mode, SF_INFO *sfinfo, void *user_data) ;
       int         <A HREF="#check">sf_format_check</A>  (const SF_INFO *info) ;
@@ -132,6 +133,16 @@ UTF16_BE encoded filename.
 
 <PRE>
       SNDFILE*  sf_wchar_open (LPCWSTR wpath, int mode, SF_INFO *sfinfo) ;
+</PRE>
+
+<P>
+The sf_utf8_open() is similar to sf_open(), but takes a UTF8 encoded filename.
+ The purpose of this function to support uncode paths in uniform way. On Windows plafrom
+  this function is part of ABI, on other plafforms it is defined to sf_open().
+</P>
+
+<PRE>
+      SNDFILE*  sf_utf8_open (const *path, int mode, SF_INFO *sfinfo) ;
 </PRE>
 
 <P>
