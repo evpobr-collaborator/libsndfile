@@ -62,6 +62,23 @@ sf_wchar_open (LPCWSTR wpath, int mode, SF_INFO *sfinfo)
 } /* sf_wchar_open */
 
 
+SNDFILE*
+sf_utf_8_open (const char *path, int mode, SF_INFO *sfinfo)
+{	SF_PRIVATE 	*psf ;
+	wchar_t wpath [SF_FILENAME_LEN] ;
+
+	int dwRet = MultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS, path, -1, wpath, SF_FILENAME_LEN) ;
+
+	if (dwRet != 0)
+	{	return sf_wchar_open (wpath, mode, sfinfo) ;
+		} ;
+	else
+	{	sf_errno = SFE_UNSUPPORTED_ENCODING ;
+		return NULL ;
+		} ;
+} /* sf_utf8_open */
+
+
 static void
 copy_filename (SF_PRIVATE *psf, LPCWSTR wpath)
 {	const wchar_t *cwcptr ;

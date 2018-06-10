@@ -582,6 +582,14 @@ SNDFILE* 	sf_open_fd	(int fd, int mode, SF_INFO *sfinfo, int close_desc) ;
 
 SNDFILE* 	sf_open_virtual	(SF_VIRTUAL_IO *sfvirtual, int mode, SF_INFO *sfinfo, void *user_data) ;
 
+/* Open a file passing in a UTF-8 filename. Otherwise, this is
+** the same as sf_open().
+*/
+#ifdef _WIN32
+SNDFILE* sf_utf8_open (const char *path, int mode, SF_INFO *sfinfo) ;
+#else
+#define sf_utf8_open sf_open
+#endif
 
 /* sf_error () returns a error number which can be translated to a text
 ** string using sf_error_number().
