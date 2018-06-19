@@ -44,7 +44,6 @@ endif (ENABLE_CPACK)
 # Options
 #
 
-option (BUILD_STATIC_LIBS "Build static libraries" ON)
 option (BUILD_SHARED_LIBS "Build shared libraries" ON)
 option (BUILD_PROGRAMS "Build programs" ON)
 option (BUILD_EXAMPLES "Build examples" ON)
@@ -59,14 +58,7 @@ if (MSVC OR MINGW)
 endif (MSVC OR MINGW)
 option (ENABLE_PACKAGE_CONFIG "Generate and install package config file" ON)
 
-if ((NOT BUILD_STATIC_LIBS) AND (NOT BUILD_SHARED_LIBS))
-	message ("
-		Both options BUILD_STATIC_LIBS and BUILD_SHARED_LIBS are manually set to OFF. To prevent configuration error
-		BUILD_STATIC_LIBS is now set to ON.\n")
-	set (BUILD_STATIC_LIBS ON)
-endif ()
-
-if ((NOT BUILD_STATIC_LIBS) AND BUILD_TESTING)
+if (BUILD_SHARED_LIBS AND BUILD_TESTING)
 	set (BUILD_TESTING OFF)
 	message ("Build testing required static libraries. To prevent build errors BUILD_TESTING disabled.")
 endif ()
@@ -81,7 +73,6 @@ include(${CMAKE_MODULE_PATH}/SndFileChecks.cmake)
 
 cmake_dependent_option (BUILD_REGTEST "Build regtest" ON "HAVE_SQLITE3" OFF)
 
-add_feature_info(BUILD_STATIC_LIBS BUILD_STATIC_LIBS "build static libraries")
 add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "build shared libraries")
 add_feature_info(DISABLE_EXTERNAL_LIBS DISABLE_EXTERNAL_LIBS "disable use of FLAC, Ogg and Vorbis")
 add_feature_info(ENABLE_EXPERIMENTAL ENABLE_EXPERIMENTAL "enable experimental code")
@@ -298,48 +289,78 @@ set (libsndfile_SOURCES ${COMMON} ${FILESPECIFIC} ${noinst_HEADERS}
 	${libgsm_SOURCES} ${libg72x_SOURCES} ${libalac_SOURCES}
 	${libsndfile_PUBLIC_HEADERS})
 
-#
-# libsndfile static library
-#
+add_library(sndfile ${libsndfile_SOURCES})
+target_include_directories(sndfile
+	PUBLIC
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src>
+		$<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}>
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
 
-if (BUILD_STATIC_LIBS)
-	set (SNDFILE_STATIC_TARGET sndfile-static)
-	add_library (${SNDFILE_STATIC_TARGET} STATIC ${libsndfile_SOURCES})
-	target_include_directories(${SNDFILE_STATIC_TARGET}
-		PUBLIC
-			$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src>
-			$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-			$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
-	if (LIBM_REQUIRED)
-		target_link_libraries (${SNDFILE_STATIC_TARGET} PUBLIC ${M_LIBRARY})
-	endif ()
-	if (NOT DISABLE_EXTERNAL_LIBS)
-		target_link_libraries (${SNDFILE_STATIC_TARGET} PUBLIC ${EXTERNAL_XIPH_LIBS})
-		target_include_directories (${SNDFILE_STATIC_TARGET} PRIVATE
-			${OGG_INCLUDE_DIRS}
-			${VORBIS_INCLUDE_DIRS}
-			${FLAC_INCLUDE_DIRS})
-			target_compile_definitions (${SNDFILE_STATIC_TARGET} PRIVATE ${FLAC_DEFINITIONS})
-		if (ENABLE_EXPERIMENTAL)
-			target_link_libraries (${SNDFILE_STATIC_TARGET} PUBLIC ${SPEEX_LIBRARIES})
-			target_include_directories (${SNDFILE_STATIC_TARGET} PRIVATE
-				${SPEEX_INCLUDE_DIRS})
-		endif ()
-	endif ()
-	if (WIN32)
-		set_target_properties (${SNDFILE_STATIC_TARGET} PROPERTIES PREFIX "lib")
-	endif ()
-	# Remove "-static" from output name
-	set_target_properties (${SNDFILE_STATIC_TARGET} PROPERTIES OUTPUT_NAME "sndfile")
-	set_target_properties (${SNDFILE_STATIC_TARGET} PROPERTIES
-		PUBLIC_HEADER "${libsndfile_PUBLIC_HEADERS}")
-endif ()
+if (LIBM_REQUIRED)
+	target_link_libraries (sndfile PRIVATE ${M_LIBRARY})
+endif (LIBM_REQUIRED)
 
-if (BUILD_SHARED_LIBS)
+if (NOT DISABLE_EXTERNAL_LIBS)
+	target_link_libraries (sndfile PRIVATE ${EXTERNAL_XIPH_LIBS})
+	target_include_directories (sndfile PRIVATE
+		${OGG_INCLUDE_DIRS}
+		${VORBIS_INCLUDE_DIRS}
+		${FLAC_INCLUDE_DIRS})
+		target_compile_definitions (sndfile PRIVATE ${FLAC_DEFINITIONS})
+	if (ENABLE_EXPERIMENTAL)
+		target_link_libraries (sndfile PRIVATE ${SPEEX_LIBRARIES})
+		target_include_directories (sndfile PRIVATE
+		${SPEEX_INCLUDE_DIRS})
+	endif (ENABLE_EXPERIMENTAL)
+endif (NOT DISABLE_EXTERNAL_LIBS)
 
-	set (SNDFILE_SHARED_TARGET sndfile-shared)
+set_target_properties (sndfile PROPERTIES
+	PUBLIC_HEADER "${libsndfile_PUBLIC_HEADERS}"
+	SOVERSION ${PROJECT_VERSION_MAJOR}
+	VERSION ${PROJECT_VERSION})
 
-	if (WIN32)
+if (WIN32)
+	set_target_properties(sndfile PROPERTIES
+		ARCHIVE_OUTPUT_NAME "libsndfile-${PROJECT_VERSION_MAJOR}"
+		PREFIX "lib"
+		OUTPUT_NAME "sndfile-${PROJECT_VERSION_MAJOR}")
+
+	file(REMOVE "${CMAKE_CURRENT_SOURCE_DIR}/src/version-metadata.rc")
+	configure_file(src/version-metadata.rc.in src/version-metadata.rc @ONLY)
+
+	target_sources (sndfile PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src/version-metadata.rc)
+
+else ()
+	set_target_properties(sndfile PROPERTIES
+		OUTPUT_NAME "sndfile")
+endif (WIN32)
+
+# Symbol files generation
+
+if (WIN32)
+	set(SYMBOL_FILENAME "libsndfile-${PROJECT_VERSION_MAJOR}.def")
+	set(SYMBOL_OS "win32")
+elseif((CMAKE_SYSTEM_NAME MATCHES "Darwin") OR (CMAKE_SYSTEM_NAME MATCHES "Rhapsody"))
+	set(SYMBOL_FILENAME "Symbols.darwin")
+	set(SYMBOL_OS "darwin")
+elseif(CMAKE_SYSTEM_NAME MATCHES "OS2")
+	set(SYMBOL_FILENAME "Symbols.os2")
+	set(SYMBOL_OS "os2")
+elseif(UNIX)
+	set(SYMBOL_FILENAME "Symbols.gnu-binutils")
+	set(SYMBOL_OS "linux")
+endif()
+
+if (DEFINED SYMBOL_OS)
+	add_custom_command(
+		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/src/${SYMBOL_FILENAME}
+		COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/src/create_symbols_file.py ${SYMBOL_OS} ${PROJECT_VERSION_MAJOR} > ${CMAKE_CURRENT_BINARY_DIR}/src/${SYMBOL_FILENAME}
+		COMMENT "Generating ${SYMBOL_FILENAME}...")
+
+	add_custom_target(GENFILES DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/src/${SYMBOL_FILENAME})
+
+	if (SYMBOL_OS MATCHES "win32")
+
 		set (VERSION_MAJOR ${CPACK_PACKAGE_VERSION_MAJOR})
 		set (PACKAGE_NAME ${CPACK_PACKAGE_NAME})
 		set (GEN_TOOL cmake)
@@ -348,106 +369,27 @@ if (BUILD_SHARED_LIBS)
 		set (CLEAN_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 		set (PACKAGE_VERSION ${CPACK_PACKAGE_VERSION})
 
-		file(REMOVE "${CMAKE_CURRENT_SOURCE_DIR}/src/version-metadata.rc")
-		configure_file(src/version-metadata.rc.in src/version-metadata.rc @ONLY)
+		target_sources(sndfile
+			PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src/${SYMBOL_FILENAME})
 
-		list (APPEND libsndfile_SOURCES
-			${CMAKE_CURRENT_BINARY_DIR}/src/version-metadata.rc)
-	endif (WIN32)
-
-	add_library(${SNDFILE_SHARED_TARGET} SHARED ${libsndfile_SOURCES})
-	target_include_directories(${SNDFILE_SHARED_TARGET}
-		PUBLIC
-			$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src>
-			$<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}>
-			$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
-
-	if (LIBM_REQUIRED)
-		target_link_libraries (${SNDFILE_SHARED_TARGET} PRIVATE ${M_LIBRARY})
-	endif (LIBM_REQUIRED)
-
-	if (NOT DISABLE_EXTERNAL_LIBS)
-		target_link_libraries (${SNDFILE_SHARED_TARGET} PRIVATE ${EXTERNAL_XIPH_LIBS})
-		target_include_directories (${SNDFILE_SHARED_TARGET} PRIVATE
-			${OGG_INCLUDE_DIRS}
-			${VORBIS_INCLUDE_DIRS}
-			${FLAC_INCLUDE_DIRS})
-			target_compile_definitions (${SNDFILE_SHARED_TARGET} PRIVATE ${FLAC_DEFINITIONS})
-		if (ENABLE_EXPERIMENTAL)
-			target_link_libraries (${SNDFILE_SHARED_TARGET} PRIVATE ${SPEEX_LIBRARIES})
-			target_include_directories (${SNDFILE_SHARED_TARGET} PRIVATE
-			${SPEEX_INCLUDE_DIRS})
-		endif (ENABLE_EXPERIMENTAL)
-	endif (NOT DISABLE_EXTERNAL_LIBS)
-
-	set_target_properties (${SNDFILE_SHARED_TARGET} PROPERTIES
-		PUBLIC_HEADER "${libsndfile_PUBLIC_HEADERS}"
-		SOVERSION ${PROJECT_VERSION_MAJOR}
-		VERSION ${PROJECT_VERSION})
-
-	if (WIN32)
-		set_target_properties(${SNDFILE_SHARED_TARGET} PROPERTIES
-			ARCHIVE_OUTPUT_NAME "libsndfile-${PROJECT_VERSION_MAJOR}"
-			PREFIX "lib"
-			OUTPUT_NAME "sndfile-${PROJECT_VERSION_MAJOR}")
-	else ()
-		set_target_properties(${SNDFILE_SHARED_TARGET} PROPERTIES
-			OUTPUT_NAME "sndfile")
-	endif (WIN32)
-
-	# Symbol files generation
-
-	if (WIN32)
-		set(SYMBOL_FILENAME "libsndfile-${PROJECT_VERSION_MAJOR}.def")
-		set(SYMBOL_OS "win32")
-	elseif((CMAKE_SYSTEM_NAME MATCHES "Darwin") OR (CMAKE_SYSTEM_NAME MATCHES "Rhapsody"))
-		set(SYMBOL_FILENAME "Symbols.darwin")
-		set(SYMBOL_OS "darwin")
-	elseif(CMAKE_SYSTEM_NAME MATCHES "OS2")
-		set(SYMBOL_FILENAME "Symbols.os2")
-		set(SYMBOL_OS "os2")
+	elseif(SYMBOL_OS MATCHES "darwin")
+		add_dependencies(sndfile GENFILES)
+		set_property(TARGET sndfile APPEND_STRING PROPERTY
+			LINK_FLAGS " -Wl,-exported_symbols_list -Wl,${CMAKE_CURRENT_BINARY_DIR}/src/${SYMBOL_FILENAME}")
+	elseif(SYMBOL_OS MATCHES "os")
+		add_dependencies(sndfile GENFILES)
+		set_property(TARGET sndfile APPEND_STRING PROPERTY
+			LINK_FLAGS " -Wl,-export-symbols ${CMAKE_CURRENT_BINARY_DIR}/src/${SYMBOL_FILENAME}")
 	elseif(UNIX)
-		set(SYMBOL_FILENAME "Symbols.gnu-binutils")
-		set(SYMBOL_OS "linux")
+		add_dependencies(sndfile GENFILES)
+		set_property(TARGET sndfile APPEND_STRING PROPERTY
+			LINK_FLAGS " -Wl,--version-script,${CMAKE_CURRENT_BINARY_DIR}/src/${SYMBOL_FILENAME}")
 	endif()
-
-	if (DEFINED SYMBOL_OS)
-		add_custom_command(
-			OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/src/${SYMBOL_FILENAME}
-			COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/src/create_symbols_file.py ${SYMBOL_OS} ${PROJECT_VERSION_MAJOR} > ${CMAKE_CURRENT_BINARY_DIR}/src/${SYMBOL_FILENAME}
-			COMMENT "Generating ${SYMBOL_FILENAME}...")
-
-		add_custom_target(GENFILES DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/src/${SYMBOL_FILENAME})
-		if (SYMBOL_OS MATCHES "win32")
-			target_sources(${SNDFILE_SHARED_TARGET}
-				PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src/${SYMBOL_FILENAME})
-		elseif(SYMBOL_OS MATCHES "darwin")
-			add_dependencies(${SNDFILE_SHARED_TARGET} GENFILES)
-			set_property(TARGET ${SNDFILE_SHARED_TARGET} APPEND_STRING PROPERTY
-				LINK_FLAGS " -Wl,-exported_symbols_list -Wl,${CMAKE_CURRENT_BINARY_DIR}/src/${SYMBOL_FILENAME}")
-		elseif(SYMBOL_OS MATCHES "os")
-			add_dependencies(${SNDFILE_SHARED_TARGET} GENFILES)
-			set_property(TARGET ${SNDFILE_SHARED_TARGET} APPEND_STRING PROPERTY
-				LINK_FLAGS " -Wl,-export-symbols ${CMAKE_CURRENT_BINARY_DIR}/src/${SYMBOL_FILENAME}")
-		elseif(UNIX)
-			add_dependencies(${SNDFILE_SHARED_TARGET} GENFILES)
-			set_property(TARGET ${SNDFILE_SHARED_TARGET} APPEND_STRING PROPERTY
-				LINK_FLAGS " -Wl,--version-script,${CMAKE_CURRENT_BINARY_DIR}/src/${SYMBOL_FILENAME}")
-		endif()
-	endif()
-
-endif (BUILD_SHARED_LIBS)
+endif()
 
 #
 # Programs
 #
-
-# Select libsndfile version to link
-if (BUILD_SHARED_LIBS)
-	set (SNDFILE_TARGET ${SNDFILE_SHARED_TARGET})
-else (NOT BUILD_SHARED_LIBS)
-	set (SNDFILE_TARGET ${SNDFILE_STATIC_TARGET})
-endif (BUILD_SHARED_LIBS)
 
 if (BUILD_PROGRAMS)
 
@@ -458,7 +400,7 @@ if (BUILD_PROGRAMS)
 		programs/common.c
 		programs/common.h)
 	add_executable (sndfile-info ${sndfile_info_SOURCES})
-	target_link_libraries(sndfile-info PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(sndfile-info PUBLIC sndfile)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(sndfile-info PRIVATE ${M_LIBRARY})
 	endif ()
@@ -476,7 +418,7 @@ if (BUILD_PROGRAMS)
 	endif ()
 
 	add_executable (sndfile-play ${sndfile_play_SOURCES})
-	target_link_libraries(sndfile-play PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(sndfile-play PUBLIC sndfile)
 	if (WIN32)
 		target_link_libraries(sndfile-play PRIVATE winmm)
 	# Maybe ALSA & Sndio are present in BeOS. They are not required
@@ -496,7 +438,7 @@ if (BUILD_PROGRAMS)
 		programs/common.c
 		programs/common.h)
 	add_executable (sndfile-convert ${sndfile_convert_SOURCES})
-	target_link_libraries(sndfile-convert PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(sndfile-convert PUBLIC sndfile)
 
 # sndfile-cmp
 
@@ -505,7 +447,7 @@ if (BUILD_PROGRAMS)
 		programs/common.c
 		programs/common.h)
 	add_executable (sndfile-cmp ${sndfile_cmp_SOURCES})
-	target_link_libraries(sndfile-cmp PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(sndfile-cmp PUBLIC sndfile)
 
 # sndfile-metadata-set
 
@@ -514,7 +456,7 @@ if (BUILD_PROGRAMS)
 		programs/common.c
 		programs/common.h)
 	add_executable (sndfile-metadata-set ${sndfile_metadata_set_SOURCES})
-	target_link_libraries(sndfile-metadata-set PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(sndfile-metadata-set PUBLIC sndfile)
 
 # sndfile-metadata-get
 
@@ -523,7 +465,7 @@ if (BUILD_PROGRAMS)
 		programs/common.c
 		programs/common.h)
 	add_executable (sndfile-metadata-get ${sndfile_metadata_get_SOURCES})
-	target_link_libraries(sndfile-metadata-get PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(sndfile-metadata-get PUBLIC sndfile)
 
 # sndfile-interleave
 
@@ -532,7 +474,7 @@ if (BUILD_PROGRAMS)
 		programs/common.c
 		programs/common.h)
 	add_executable (sndfile-interleave ${sndfile_interleave_SOURCES})
-	target_link_libraries(sndfile-interleave PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(sndfile-interleave PUBLIC sndfile)
 
 # sndfile-deinterleave
 
@@ -541,7 +483,7 @@ if (BUILD_PROGRAMS)
 		programs/common.c
 		programs/common.h)
 	add_executable (sndfile-deinterleave ${sndfile_deinterleave_SOURCES})
-	target_link_libraries(sndfile-deinterleave PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(sndfile-deinterleave PUBLIC sndfile)
 
 # sndfile-concat
 
@@ -550,7 +492,7 @@ if (BUILD_PROGRAMS)
 		programs/common.c
 		programs/common.h)
 	add_executable (sndfile-concat ${sndfile_concat_SOURCES})
-	target_link_libraries(sndfile-concat PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(sndfile-concat PUBLIC sndfile)
 
 # sndfile-salvage
 
@@ -559,7 +501,7 @@ if (BUILD_PROGRAMS)
 		programs/common.c
 		programs/common.h)
 	add_executable (sndfile-salvage ${sndfile_salvage_SOURCES})
-	target_link_libraries(sndfile-salvage PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(sndfile-salvage PUBLIC sndfile)
 
 	set (SNDFILE_PROGRAM_TARGETS
 		sndfile-info
@@ -587,19 +529,19 @@ if (BUILD_EXAMPLES)
 
 	set (sndfile-to-text_SOURCES examples/sndfile-to-text.c)
 	add_executable (sndfile-to-text ${sndfile-to-text_SOURCES})
-	target_link_libraries(sndfile-to-text PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(sndfile-to-text PUBLIC sndfile)
 
 # sndfile-loopify
 
 	set (sndfile_loopify_SOURCES examples/sndfile-loopify.c)
 	add_executable (sndfile-loopify ${sndfile_loopify_SOURCES})
-	target_link_libraries(sndfile-loopify PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(sndfile-loopify PUBLIC sndfile)
 
 # make_sine
 
 	set (make_sine_SOURCES examples/make_sine.c)
 	add_executable (make_sine ${make_sine_SOURCES})
-	target_link_libraries(make_sine PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(make_sine PUBLIC sndfile)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(make_sine PRIVATE ${M_LIBRARY})
 	endif ()
@@ -608,13 +550,13 @@ if (BUILD_EXAMPLES)
 
 	set (sfprocess_SOURCES examples/sfprocess.c)
 	add_executable (sfprocess ${sfprocess_SOURCES})
-	target_link_libraries(sfprocess PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(sfprocess PUBLIC sndfile)
 
 # list_formats
 
 	set (list_formats_SOURCES examples/list_formats.c)
 	add_executable (list_formats ${list_formats_SOURCES})
-	target_link_libraries(list_formats PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(list_formats PUBLIC sndfile)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(make_sine PRIVATE ${M_LIBRARY})
 	endif ()
@@ -623,7 +565,7 @@ if (BUILD_EXAMPLES)
 
 	set (sndfilehandle_SOURCES examples/sndfilehandle.cc)
 	add_executable (sndfilehandle ${sndfilehandle_SOURCES})
-	target_link_libraries(sndfilehandle PUBLIC ${SNDFILE_TARGET})
+	target_link_libraries(sndfilehandle PUBLIC sndfile)
 
 	set (SNDFILE_EXAMPLE_TARGETS
 		sndfile-to-text
@@ -650,7 +592,7 @@ if (BUILD_REGTEST)
 		regtest/checksum.c)
 	add_executable (sndfile-regtest ${sndfile_regtest_SOURCES})
 	target_include_directories(sndfile-regtest PRIVATE . ${SQLITE3_INCLUDE_DIRS})
-	target_link_libraries(sndfile-regtest PUBLIC ${SNDFILE_TARGET} ${SQLITE3_LIBRARIES})
+	target_link_libraries(sndfile-regtest PUBLIC sndfile ${SQLITE3_LIBRARIES})
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(sndfile-regtest PRIVATE ${M_LIBRARY})
 	endif ()
@@ -671,7 +613,7 @@ if (ENABLE_PACKAGE_CONFIG)
 	 endif()
 
 
-	install (TARGETS ${SNDFILE_STATIC_TARGET} ${SNDFILE_SHARED_TARGET} ${SNDFILE_PROGRAM_TARGETS}
+	install (TARGETS sndfile ${SNDFILE_PROGRAM_TARGETS}
 	EXPORT LibSndFileTargets
 	RUNTIME DESTINATION			${CMAKE_INSTALL_BINDIR}
 	ARCHIVE DESTINATION			${CMAKE_INSTALL_LIBDIR}
@@ -695,7 +637,7 @@ if (ENABLE_PACKAGE_CONFIG)
 
 elseif (NOT ENABLE_PACKAGE_CONFIG)
 
-install (TARGETS ${SNDFILE_STATIC_TARGET} ${SNDFILE_SHARED_TARGET} ${sdnfile_PROGRAMS}
+install (TARGETS sndfile ${sdnfile_PROGRAMS}
 	RUNTIME DESTINATION			${CMAKE_INSTALL_BINDIR}
 	ARCHIVE DESTINATION			${CMAKE_INSTALL_LIBDIR}
 	LIBRARY DESTINATION			${CMAKE_INSTALL_LIBDIR}
@@ -771,7 +713,7 @@ if (BUILD_TESTING)
 
 	# utils static library
 	add_library(test_utils STATIC tests/utils.c)
-	target_link_libraries(test_utils PUBLIC ${SNDFILE_STATIC_TARGET})
+	target_link_libraries(test_utils PUBLIC sndfile)
 	target_include_directories(test_utils PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/tests")
 
 	### test_main
@@ -793,7 +735,7 @@ if (BUILD_TESTING)
 		src/test_nms_adpcm.c)
 
 	add_executable (test_main ${test_main_SOURCES})
-	target_link_libraries (test_main ${SNDFILE_STATIC_TARGET})
+	target_link_libraries (test_main sndfile)
 	if (MSVC)
 		target_compile_definitions (test_main PRIVATE _USE_MATH_DEFINES)
 	endif (MSVC)
@@ -803,7 +745,7 @@ if (BUILD_TESTING)
 
 	set (sfversion_SOURCES tests/sfversion.c)
 	add_executable (sfversion ${sfversion_SOURCES})
-	target_link_libraries (sfversion ${SNDFILE_STATIC_TARGET})
+	target_link_libraries (sfversion sndfile)
 	add_test (sfversion sfversion)
 	set_tests_properties (sfversion PROPERTIES
 		PASS_REGULAR_EXPRESSION "libsndfile-${CPACK_PACKAGE_VERSION_FULL}")
@@ -812,7 +754,7 @@ if (BUILD_TESTING)
 
 	set (error_test_SOURCES tests/error_test.c)
 	add_executable (error_test ${error_test_SOURCES})
-	target_link_libraries (error_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (error_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(error_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -821,7 +763,7 @@ if (BUILD_TESTING)
 	### ulaw_test
 	set (ulaw_test_SOURCES tests/ulaw_test.c)
 	add_executable (ulaw_test ${ulaw_test_SOURCES})
-	target_link_libraries (ulaw_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (ulaw_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(ulaw_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -830,7 +772,7 @@ if (BUILD_TESTING)
 	### alaw_test
 	set (alaw_test_SOURCES tests/alaw_test.c)
 	add_executable (alaw_test ${alaw_test_SOURCES})
-	target_link_libraries (alaw_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (alaw_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(alaw_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -840,7 +782,7 @@ if (BUILD_TESTING)
 
 	set (dwvw_test_SOURCES tests/dwvw_test.c)
 	add_executable (dwvw_test ${dwvw_test_SOURCES})
-	target_link_libraries (dwvw_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (dwvw_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(dwvw_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -850,7 +792,7 @@ if (BUILD_TESTING)
 
 	set (command_test_SOURCES tests/command_test.c)
 	add_executable (command_test ${command_test_SOURCES})
-	target_link_libraries (command_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (command_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(command_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -860,7 +802,7 @@ if (BUILD_TESTING)
 
 	set (floating_point_test_SOURCES tests/dft_cmp.c tests/floating_point_test.c)
 	add_executable (floating_point_test ${floating_point_test_SOURCES})
-	target_link_libraries (floating_point_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (floating_point_test PRIVATE sndfile test_utils)
 	target_include_directories(floating_point_test PRIVATE tests)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(floating_point_test PRIVATE ${M_LIBRARY})
@@ -871,7 +813,7 @@ if (BUILD_TESTING)
 
 	set (checksum_test_SOURCES tests/checksum_test.c)
 	add_executable (checksum_test ${checksum_test_SOURCES})
-	target_link_libraries (checksum_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (checksum_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(checksum_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -881,7 +823,7 @@ if (BUILD_TESTING)
 
 	set (scale_clip_test_SOURCES tests/scale_clip_test.c)
 	add_executable (scale_clip_test ${scale_clip_test_SOURCES})
-	target_link_libraries (scale_clip_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (scale_clip_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(scale_clip_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -891,7 +833,7 @@ if (BUILD_TESTING)
 
 	set (headerless_test_SOURCES tests/headerless_test.c)
 	add_executable (headerless_test ${headerless_test_SOURCES})
-	target_link_libraries (headerless_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (headerless_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(headerless_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -901,7 +843,7 @@ if (BUILD_TESTING)
 
 	set (rdwr_test_SOURCES tests/rdwr_test.c)
 	add_executable (rdwr_test ${rdwr_test_SOURCES})
-	target_link_libraries (rdwr_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (rdwr_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(rdwr_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -911,7 +853,7 @@ if (BUILD_TESTING)
 
 	set (locale_test_SOURCES tests/locale_test.c)
 	add_executable (locale_test ${locale_test_SOURCES})
-	target_link_libraries (locale_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (locale_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(locale_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -922,7 +864,7 @@ if (BUILD_TESTING)
 	if (WIN32 AND BUILD_SHARED_LIBS)
 		set (win32_ordinal_test_SOURCES tests/win32_ordinal_test.c)
 		add_executable (win32_ordinal_test ${win32_ordinal_test_SOURCES})
-		target_link_libraries (win32_ordinal_test PRIVATE ${SNDFILE_SHARED_TARGET} test_utils)
+		target_link_libraries (win32_ordinal_test PRIVATE sndfile test_utils)
 		add_test (win32_ordinal_test win32_ordinal_test)
 	endif ()
 
@@ -930,7 +872,7 @@ if (BUILD_TESTING)
 
 	set (cpp_test_SOURCES tests/cpp_test.cc)
 	add_executable (cpp_test ${cpp_test_SOURCES})
-	target_link_libraries (cpp_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (cpp_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(cpp_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -940,7 +882,7 @@ if (BUILD_TESTING)
 
 	set (external_libs_test_SOURCES tests/external_libs_test.c)
 	add_executable (external_libs_test ${external_libs_test_SOURCES})
-	target_link_libraries (external_libs_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (external_libs_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(external_libs_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -950,7 +892,7 @@ if (BUILD_TESTING)
 
 	set (format_check_test_SOURCES tests/format_check_test.c)
 	add_executable (format_check_test ${format_check_test_SOURCES})
-	target_link_libraries (format_check_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (format_check_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(format_check_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -960,7 +902,7 @@ if (BUILD_TESTING)
 
 	set (channel_test_SOURCES tests/channel_test.c)
 	add_executable (channel_test ${channel_test_SOURCES})
-	target_link_libraries (channel_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (channel_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(channel_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -970,7 +912,7 @@ if (BUILD_TESTING)
 
 	set (pcm_test_SOURCES tests/pcm_test.c)
 	add_executable (pcm_test ${pcm_test_SOURCES})
-	target_link_libraries (pcm_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (pcm_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(pcm_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -980,7 +922,7 @@ if (BUILD_TESTING)
 
 	set (write_read_test_SOURCES tests/generate.c tests/write_read_test.c)
 	add_executable (write_read_test ${write_read_test_SOURCES})
-	target_link_libraries (write_read_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (write_read_test PRIVATE sndfile test_utils)
 	target_include_directories(write_read_test PRIVATE tests)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(write_read_test PRIVATE ${M_LIBRARY})
@@ -988,91 +930,91 @@ if (BUILD_TESTING)
 
 	set (lossy_comp_test_SOURCES tests/lossy_comp_test.c)
 	add_executable (lossy_comp_test ${lossy_comp_test_SOURCES})
-	target_link_libraries (lossy_comp_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (lossy_comp_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(lossy_comp_test PRIVATE ${M_LIBRARY})
 	endif ()
 
 	set (peak_chunk_test_SOURCES tests/peak_chunk_test.c)
 	add_executable (peak_chunk_test ${peak_chunk_test_SOURCES})
-	target_link_libraries (peak_chunk_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (peak_chunk_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(peak_chunk_test PRIVATE ${M_LIBRARY})
 	endif ()
 
 	set (header_test_SOURCES tests/header_test.c)
 	add_executable (header_test ${header_test_SOURCES})
-	target_link_libraries (header_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (header_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(header_test PRIVATE ${M_LIBRARY})
 	endif ()
 
 	set (misc_test_SOURCES tests/misc_test.c)
 	add_executable (misc_test ${misc_test_SOURCES})
-	target_link_libraries (misc_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (misc_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(misc_test PRIVATE ${M_LIBRARY})
 	endif ()
 
 	set (string_test_SOURCES tests/string_test.c)
 	add_executable (string_test ${string_test_SOURCES})
-	target_link_libraries (string_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (string_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(string_test PRIVATE ${M_LIBRARY})
 	endif ()
 
 	set (multi_file_test_SOURCES tests/multi_file_test.c)
 	add_executable (multi_file_test ${multi_file_test_SOURCES})
-	target_link_libraries (multi_file_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (multi_file_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(multi_file_test PRIVATE ${M_LIBRARY})
 	endif ()
 
 	set (aiff_rw_test_SOURCES tests/aiff_rw_test.c)
 	add_executable (aiff_rw_test ${aiff_rw_test_SOURCES})
-	target_link_libraries (aiff_rw_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (aiff_rw_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(aiff_rw_test PRIVATE ${M_LIBRARY})
 	endif ()
 
 	set (chunk_test_SOURCES tests/chunk_test.c)
 	add_executable (chunk_test ${chunk_test_SOURCES})
-	target_link_libraries (chunk_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (chunk_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(chunk_test PRIVATE ${M_LIBRARY})
 	endif ()
 
 	set (long_read_write_test_SOURCES tests/long_read_write_test.c)
 	add_executable (long_read_write_test ${long_read_write_test_SOURCES})
-	target_link_libraries (long_read_write_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (long_read_write_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(long_read_write_test PRIVATE ${M_LIBRARY})
 	endif ()
 
 	set (raw_test_SOURCES tests/raw_test.c)
 	add_executable (raw_test ${raw_test_SOURCES})
-	target_link_libraries (raw_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (raw_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(raw_test PRIVATE ${M_LIBRARY})
 	endif ()
 
 	set (compression_size_test_SOURCES tests/compression_size_test.c)
 	add_executable (compression_size_test ${compression_size_test_SOURCES})
-	target_link_libraries (compression_size_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (compression_size_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(compression_size_test PRIVATE ${M_LIBRARY})
 	endif ()
 
 	set (ogg_test_SOURCES tests/ogg_test.c)
 	add_executable (ogg_test ${ogg_test_SOURCES})
-	target_link_libraries (ogg_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (ogg_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(ogg_test PRIVATE ${M_LIBRARY})
 	endif ()
 
 	set (stdin_test_SOURCES tests/stdin_test.c)
 	add_executable (stdin_test ${stdin_test_SOURCES})
-	target_link_libraries (stdin_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (stdin_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(stdin_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -1082,7 +1024,7 @@ if (BUILD_TESTING)
 
 	set (stdout_test_SOURCES tests/stdout_test.c)
 	add_executable (stdout_test ${stdout_test_SOURCES})
-	target_link_libraries (stdout_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (stdout_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(stdout_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -1092,21 +1034,21 @@ if (BUILD_TESTING)
 
 	set (stdio_test_SOURCES tests/stdio_test.c)
 	add_executable (stdio_test ${stdio_test_SOURCES})
-	target_link_libraries (stdio_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (stdio_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(stdio_test PRIVATE ${M_LIBRARY})
 	endif ()
 
 	set (pipe_test_SOURCES tests/pipe_test.c)
 	add_executable (pipe_test ${pipe_test_SOURCES})
-	target_link_libraries (pipe_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (pipe_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(pipe_test PRIVATE ${M_LIBRARY})
 	endif ()
 
 	set (virtual_io_test_SOURCES tests/virtual_io_test.c)
 	add_executable (virtual_io_test ${virtual_io_test_SOURCES})
-	target_link_libraries (virtual_io_test PRIVATE ${SNDFILE_STATIC_TARGET} test_utils)
+	target_link_libraries (virtual_io_test PRIVATE sndfile test_utils)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(virtual_io_test PRIVATE ${M_LIBRARY})
 	endif ()
@@ -1115,7 +1057,7 @@ if (BUILD_TESTING)
 
 	set (g72x_test_SOURCES src/G72x/g72x_test.c ${libg72x_SOURCES})
 	add_executable (g72x_test ${g72x_test_SOURCES})
-	target_link_libraries (g72x_test PRIVATE ${SNDFILE_STATIC_TARGET})
+	target_link_libraries (g72x_test PRIVATE sndfile)
 	if (BUILD_SHARED_LIBS AND LIBM_REQUIRED)
 		target_link_libraries(g72x_test PRIVATE ${M_LIBRARY})
 	endif ()
