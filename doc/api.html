@@ -63,7 +63,7 @@ The functions of libsndfile are defined as follows:
       #include &lt;sndfile.h&gt;
 
       SNDFILE*    <A HREF="#open">sf_open</A>          (const char *path, int mode, SF_INFO *sfinfo) ;
-      SNDFILE*    <A HREF="#open">sf_wchar_open</A>    (LPCWSTR wpath, int mode, SF_INFO *sfinfo) ;
+      SNDFILE*    <A HREF="#open">sf_wchar_open</A>    (const wchar_t *wpath, int mode, SF_INFO *sfinfo) ;
       SNDFILE*    <A HREF="#open_fd">sf_open_fd</A>       (int fd, int mode, SF_INFO *sfinfo, int close_desc) ;
       SNDFILE* 	  <A HREF="#open_virtual">sf_open_virtual</A>  (SF_VIRTUAL_IO *sfvirtual, int mode, SF_INFO *sfinfo, void *user_data) ;
       int         <A HREF="#check">sf_format_check</A>  (const SF_INFO *info) ;
@@ -131,7 +131,7 @@ UTF16_BE encoded filename.
 </P>
 
 <PRE>
-      SNDFILE*  sf_wchar_open (LPCWSTR wpath, int mode, SF_INFO *sfinfo) ;
+      SNDFILE*  sf_wchar_open (const wchar_t *wpath, int mode, SF_INFO *sfinfo) ;
 </PRE>
 
 <P>

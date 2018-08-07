@@ -746,13 +746,12 @@ void	sf_write_sync	(SNDFILE *sndfile) ;
 **
 ** In order for this to work, you need to do the following:
 **
-**		#include <windows.h>
 **		#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
 **		#including <sndfile.h>
 */
 
 #if (defined (ENABLE_SNDFILE_WINDOWS_PROTOTYPES) && ENABLE_SNDFILE_WINDOWS_PROTOTYPES)
-SNDFILE* sf_wchar_open (LPCWSTR wpath, int mode, SF_INFO *sfinfo) ;
+SNDFILE* sf_wchar_open (const wchar_t *wpath, int mode, SF_INFO *sfinfo) ;
 #endif
 
 
