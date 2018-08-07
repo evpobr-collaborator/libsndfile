@@ -1,3 +1,5 @@
+dist: travis_latest
+group: edge
 sudo: required
 language: c
 
@@ -34,18 +36,12 @@ before_install:
     if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
       brew update
       brew install autogen flac libogg libvorbis
-    else
-      sudo add-apt-repository ppa:ondrej/autotools -y # automake 1.15
-      sudo add-apt-repository ppa:cz.nic-labs/knot-dns -y # pkg-config 0.29.2
-      sudo apt-get update
-      sudo apt-get install -y autoconf automake-1.15 pkg-config m4 libfftw3-dev libasound2-dev
     fi
 
 install:
   - true
 
 script:
-  - mkdir cmake-build && (cd cmake-build && cmake .. -DCMAKE_BUILD_TYPE=Release && make VERBOSE=1 && ctest -V)
   - pwd
   - ./autogen.sh
   - ./configure --enable-werror && make clean all check && make distcheck
