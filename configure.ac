@@ -322,11 +322,6 @@ HAVE_EXTERNAL_XIPH_LIBS=0
 EXTERNAL_XIPH_CFLAGS=""
 EXTERNAL_XIPH_LIBS=""
 
-dnl Check for pkg-config outside the if statement.
-PKG_PROG_PKG_CONFIG
-AX_REQUIRE_DEFINED([PKG_INSTALLDIR])
-PKG_INSTALLDIR
-
 AS_IF([test -n "$PKG_CONFIG"], [
 		AS_IF([test "x$enable_external_libs" = "xno"], [
 				AC_MSG_WARN([[*** External libs (FLAC, Ogg, Vorbis) disabled. ***]])
