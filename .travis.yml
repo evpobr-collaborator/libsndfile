@@ -5,7 +5,7 @@ language: c
 matrix:
   include:
     - os: linux
-      dist: trusty
+      dist: xenial
       compiler: clang
       addons:
         apt:
@@ -17,7 +17,7 @@ matrix:
             - libasound2-dev
             - pkg-config
     - os: linux
-      dist: trusty
+      dist: xenial
       compiler: gcc
       addons:
         apt:
@@ -37,6 +37,11 @@ before_install:
     if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
       brew update
       brew install autogen flac libogg libvorbis
+    else
+      sudo add-apt-repository ppa:ondrej/autotools -y # automake 1.15
+      sudo add-apt-repository ppa:cz.nic-labs/knot-dns -y # pkg-config 0.29.2
+      sudo apt-get update -q
+      sudo apt-get install -y autoconf automake-1.15 pkg-config m4 libfftw3-dev libasound2-dev
     fi
 
 install:
