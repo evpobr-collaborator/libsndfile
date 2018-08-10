@@ -15,6 +15,7 @@ matrix:
             - libvorbis-dev
             - libflac-dev
             - libasound2-dev
+            - pkg-config
     - os: linux
       dist: trusty
       compiler: gcc
@@ -26,6 +27,7 @@ matrix:
             - libvorbis-dev
             - libflac-dev
             - libasound2-dev
+            - pkg-config
 
     - os: osx
       compiler: clang
