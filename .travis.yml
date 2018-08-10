@@ -16,9 +16,10 @@ addons:
       - libvorbis-dev
       - libflac-dev
       - libasound2-dev
-exclude:
-  - os: osx
-    compiler: gcc
+matrix:
+  exclude:
+    - os: osx
+      compiler: gcc
 
 before_install:
   - |
