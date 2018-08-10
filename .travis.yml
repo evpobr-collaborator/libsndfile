@@ -3,20 +3,20 @@ sudo: required
 language: c
 matrix:
   include:
-    os: linux
-    dist: xenial
-    compiler:
-      - gcc
-      - clang
-    addons:
-      apt:
-        packages:
-          - autogen
-          - libogg-dev
-          - libvorbis-dev
-          - libflac-dev
-          - libasound2-dev
-    os: osx
+    - os: linux
+      dist: xenial
+      compiler:
+        - gcc
+        - clang
+      addons:
+        apt:
+          packages:
+            - autogen
+            - libogg-dev
+            - libvorbis-dev
+            - libflac-dev
+            - libasound2-dev
+    - os: osx
       compiler: clang
 
 before_install:
