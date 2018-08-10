@@ -6,9 +6,6 @@ matrix:
   include:
     - os: linux
       dist: xenial
-      compiler:
-        - clang
-        - gcc
       addons:
         apt:
           packages:
@@ -17,8 +14,9 @@ matrix:
             - libvorbis-dev
             - libflac-dev
             - libasound2-dev
+  exclude:
     - os: osx
-      compiler: clang
+      compiler: gcc
 
 before_install:
   - |
