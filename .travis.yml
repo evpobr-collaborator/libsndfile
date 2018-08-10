@@ -1,25 +1,23 @@
 group: travis_latest
 sudo: required
 language: c
-os:
-  - linux
-  - osx
-dist: xenial
-compiler:
-  - gcc
-  - clang
-addons:
-  apt:
-    packages:
-      - autogen
-      - libogg-dev
-      - libvorbis-dev
-      - libflac-dev
-      - libasound2-dev
 matrix:
-  exclude:
-    - os: osx
-      compiler: gcc
+  include:
+    os: linux
+    dist: xenial
+    compiler:
+      - gcc
+      - clang
+    addons:
+      apt:
+        packages:
+          - autogen
+          - libogg-dev
+          - libvorbis-dev
+          - libflac-dev
+          - libasound2-dev
+    os: osx
+      compiler: clang
 
 before_install:
   - |
