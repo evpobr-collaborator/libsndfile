@@ -1,10 +1,10 @@
 sudo: required
 language: c
+env:
+  - BUILD_TOOL=autotools
+  - BUILD_TOOL=cmake
 
 matrix:
-  env:
-    - BUILD_TOOL=autotools
-    - BUILD_TOOL=cmake
   include:
     - os: linux
       dist: xenial
