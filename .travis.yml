@@ -40,5 +40,5 @@ install:
   - true
 
 script:
-  - if [[ "${BUILD_SYSTEM}" == "CMake" ]]; then mkdir cmake-build && (cd cmake-build && cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON && cmake --build . && ctest --output-on-failure); fi
+  - if [[ "${BUILD_SYSTEM}" == "CMake" ]]; then mkdir cmake-build && (cd cmake-build && cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release && cmake --build . && ctest --output-on-failure); fi
   - if [[ "${BUILD_SYSTEM}" == "Autotools" ]]; then ./autogen.sh && ./configure --enable-werror && make clean all check && make distcheck; fi
