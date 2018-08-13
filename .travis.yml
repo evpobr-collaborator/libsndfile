@@ -1,3 +1,4 @@
+group: travis_latest
 sudo: required
 language: c
 env:
