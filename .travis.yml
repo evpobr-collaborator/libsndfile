@@ -11,6 +11,9 @@ dist: xenial
 compiler:
   - gcc
   - clang
+env:
+  - BUILD_TOOL=autotools
+  - BUILD_TOOL=cmake
 addons:
   apt:
     packages:
@@ -23,9 +26,6 @@ matrix:
   exclude:
     - os: osx
       compiler: clang
-      env:
-        - BUILD_TOOL=autotools
-        - BUILD_TOOL=cmake
 
 before_install:
   - |
