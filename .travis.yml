@@ -2,6 +2,9 @@ sudo: required
 language: c
 
 matrix:
+  env:
+    - BUILD_TOOL=autotools
+    - BUILD_TOOL=cmake
   include:
     - os: linux
       dist: xenial
@@ -40,7 +43,5 @@ install:
   - true
 
 script:
-  - mkdir cmake-build && (cd cmake-build && cmake .. -DCMAKE_BUILD_TYPE=Release && make VERBOSE=1 && ctest -V)
-  - pwd
-  - ./autogen.sh
-  - ./configure --enable-werror && make clean all check && make distcheck
+  - if [[ "${BUILD_TOOL}" == "cmake" ]]; then mkdir cmake-build && (cd cmake-build && cmake .. -DCMAKE_BUILD_TYPE=Release && make VERBOSE=1 && ctest -V); fi
+  - if [[ "${BUILD_TOOL}" == "autotools" ]]; then /autogen.sh && ./configure --enable-werror && make clean all check && make distcheck; fi
