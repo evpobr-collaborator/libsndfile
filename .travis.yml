@@ -1,19 +1,20 @@
 group: travis_latest
-sudo: false
+sudo: required
 language: c
 env:
   include:
-    - BUILD_TOOL=autotools
-    - BUILD_TOOL=cmake
+    - BUILD_SYSTEM=Autotools
+    - BUILD_SYSTEM=CMake
 os:
   - linux
   - osx
+dist: xenial
 compiler:
   - gcc
   - clang
 env:
-  - BUILD_TOOL=autotools
-  - BUILD_TOOL=cmake
+  - BUILD_SYSTEM=Autotools
+  - BUILD_SYSTEM=CMake
 addons:
   apt:
     packages:
@@ -38,5 +39,5 @@ install:
   - true
 
 script:
-  - if [[ "${BUILD_TOOL}" == "cmake" ]]; then mkdir cmake-build && (cd cmake-build && cmake .. -DCMAKE_BUILD_TYPE=Release && make VERBOSE=1 && ctest -V); fi
-  - if [[ "${BUILD_TOOL}" == "autotools" ]]; then ./autogen.sh && ./configure --enable-werror && make clean all check && make distcheck; fi
+  - if [[ "${BUILD_SYSTEM}" == "CMake" ]]; then mkdir cmake-build && (cd cmake-build && cmake .. -DCMAKE_BUILD_TYPE=Release && make VERBOSE=1 && ctest -V); fi
+  - if [[ "${BUILD_SYSTEM}" == "Autotools" ]]; then ./autogen.sh && ./configure --enable-werror && make clean all check && make distcheck; fi
