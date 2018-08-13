@@ -1,35 +1,26 @@
 sudo: required
 language: c
-matrix:
+env:
   include:
-    - os: linux
-      dist: xenial
-      compiler: clang
-      addons:
-        apt:
-          packages:
-            - autogen
-            - libogg-dev
-            - libvorbis-dev
-            - libflac-dev
-            - libasound2-dev
-      env:
-        - BUILD_TOOL=autotools
-        - BUILD_TOOL=cmake
-    - os: linux
-      dist: xenial
-      compiler: gcc
-      addons:
-        apt:
-          packages:
-            - autogen
-            - libogg-dev
-            - libvorbis-dev
-            - libflac-dev
-            - libasound2-dev
-      env:
-        - BUILD_TOOL=autotools
-        - BUILD_TOOL=cmake
+    - BUILD_TOOL=autotools
+    - BUILD_TOOL=cmake
+os:
+  - linux
+  - osx
+dist: xenial
+compiler:
+  - gcc
+  - clang
+addons:
+  apt:
+    packages:
+      - autogen
+      - libogg-dev
+      - libvorbis-dev
+      - libflac-dev
+      - libasound2-dev
+matrix:
+  exclude:
     - os: osx
       compiler: clang
       env:
