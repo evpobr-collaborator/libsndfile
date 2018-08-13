@@ -2,9 +2,6 @@ sudo: required
 language: c
 matrix:
   include:
-    - env:
-      - BUILD_TOOL=autotools
-      - BUILD_TOOL=cmake
     - os: linux
       dist: xenial
       compiler: clang
@@ -16,6 +13,9 @@ matrix:
             - libvorbis-dev
             - libflac-dev
             - libasound2-dev
+      env:
+        - BUILD_TOOL=autotools
+        - BUILD_TOOL=cmake
     - os: linux
       dist: xenial
       compiler: gcc
@@ -27,9 +27,14 @@ matrix:
             - libvorbis-dev
             - libflac-dev
             - libasound2-dev
-
+      env:
+        - BUILD_TOOL=autotools
+        - BUILD_TOOL=cmake
     - os: osx
       compiler: clang
+      env:
+        - BUILD_TOOL=autotools
+        - BUILD_TOOL=cmake
 
 before_install:
   - |
