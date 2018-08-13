@@ -39,4 +39,4 @@ install:
 
 script:
   - if [[ "${BUILD_TOOL}" == "cmake" ]]; then mkdir cmake-build && (cd cmake-build && cmake .. -DCMAKE_BUILD_TYPE=Release && make VERBOSE=1 && ctest -V); fi
-  - if [[ "${BUILD_TOOL}" == "autotools" ]]; then /autogen.sh && ./configure --enable-werror && make clean all check && make distcheck; fi
+  - if [[ "${BUILD_TOOL}" == "autotools" ]]; then ./autogen.sh && ./configure --enable-werror && make clean all check && make distcheck; fi
