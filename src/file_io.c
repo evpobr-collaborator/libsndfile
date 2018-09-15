@@ -125,14 +125,17 @@ psf_open_rsrc (SF_PRIVATE *psf)
 	psf->error = SFE_NO_ERROR ;
 	if ((psf->rsrc.filedes = psf_open_fd (&psf->rsrc)) >= 0)
 	{	psf->rsrclength = psf_get_filelen_fd (psf->rsrc.filedes) ;
-		if (psf->rsrclength > 0 || (psf->rsrc.mode & SFM_WRITE))
+		if (psf->rsrclength > 0 || (psf->rsrc.mode & SFM_WRITE)) {
+			printf ("psf_open_rsrc: path 1 success.\n");
 			return SFE_NO_ERROR ;
+		}
 		psf_close_fd (psf->rsrc.filedes) ;
 		psf->rsrc.filedes = -1 ;
 		} ;
 
 	if (psf->rsrc.filedes == - SFE_BAD_OPEN_MODE)
 	{	psf->error = SFE_BAD_OPEN_MODE ;
+		printf ("psf_open_rsrc: path 1 SFE_BAD_OPEN_MODE.\n");
 		return psf->error ;
 		} ;
 
@@ -144,6 +147,7 @@ psf_open_rsrc (SF_PRIVATE *psf)
 	psf->error = SFE_NO_ERROR ;
 	if ((psf->rsrc.filedes = psf_open_fd (&psf->rsrc)) >= 0)
 	{	psf->rsrclength = psf_get_filelen_fd (psf->rsrc.filedes) ;
+		printf ("%s", "psf_open_rsrc: path 2 success.\n");
 		return SFE_NO_ERROR ;
 		} ;
 
@@ -155,6 +159,7 @@ psf_open_rsrc (SF_PRIVATE *psf)
 	psf->error = SFE_NO_ERROR ;
 	if ((psf->rsrc.filedes = psf_open_fd (&psf->rsrc)) >= 0)
 	{	psf->rsrclength = psf_get_filelen_fd (psf->rsrc.filedes) ;
+		printf ("%s", "psf_open_rsrc: path 3 success.\n");
 		return SFE_NO_ERROR ;
 		} ;
 
@@ -163,6 +168,8 @@ psf_open_rsrc (SF_PRIVATE *psf)
 		psf_log_syserr (psf, errno) ;
 
 	psf->rsrc.filedes = -1 ;
+
+	printf ("%s", "psf_open_rsrc: failed\n");
 
 	return psf->error ;
 } /* psf_open_rsrc */
