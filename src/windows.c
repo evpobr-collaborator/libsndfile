@@ -45,8 +45,6 @@ sf_wchar_open (LPCWSTR wpath, int mode, SF_INFO *sfinfo)
 		return	NULL ;
 		} ;
 
-	psf_init_files (psf) ;
-
 	if (WideCharToMultiByte (CP_UTF8, 0, wpath, -1, utf8name, sizeof (utf8name), NULL, NULL) == 0)
 		psf->file.path.wc [0] = 0 ;
 

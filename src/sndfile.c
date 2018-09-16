@@ -299,22 +299,22 @@ static char	sf_syserr [SF_SYSERR_LEN] = { 0 } ;
 /*------------------------------------------------------------------------------
 */
 
-#define	VALIDATE_SNDFILE_AND_ASSIGN_PSF(a, b, c)	\
-		{	if ((a) == NULL)						\
-			{	sf_errno = SFE_BAD_SNDFILE_PTR ;	\
-				return 0 ;							\
-				} ;									\
-			(b) = (SF_PRIVATE*) (a) ;				\
-			if ((b)->virtual_io == SF_FALSE &&		\
-				psf_file_valid (b) == 0)			\
-			{	(b)->error = SFE_BAD_FILE_PTR ;		\
-				return 0 ;							\
-				} ;									\
-			if ((b)->Magick != SNDFILE_MAGICK)		\
-			{	(b)->error = SFE_BAD_SNDFILE_PTR ;	\
-				return 0 ;							\
-				} ;									\
-			if (c) (b)->error = 0 ;					\
+#define	VALIDATE_SNDFILE_AND_ASSIGN_PSF(a, b, c)				\
+		{	if ((a) == NULL)									\
+			{	sf_errno = SFE_BAD_SNDFILE_PTR ;				\
+				return 0 ;										\
+				} ;												\
+			(b) = (SF_PRIVATE*) (a) ;							\
+			if ((b)->file.virtual_io == SF_FALSE &&				\
+				psf_file_valid (b) == 0)						\
+			{	(b)->error = SFE_BAD_FILE_PTR ;					\
+				return 0 ;										\
+				} ;												\
+			if ((b)->Magick != SNDFILE_MAGICK)					\
+			{	(b)->error = SFE_BAD_SNDFILE_PTR ;				\
+				return 0 ;										\
+				} ;												\
+			if (c) (b)->error = 0 ;								\
 			}
 
 /*------------------------------------------------------------------------------
@@ -332,8 +332,6 @@ sf_open	(const char *path, int mode, SF_INFO *sfinfo)
 	{	sf_errno = SFE_MALLOC_FAILED ;
 		return	NULL ;
 		} ;
-
-	psf_init_files (psf) ;
 
 	psf_log_printf (psf, "File : %s\n", path) ;
 
@@ -365,16 +363,16 @@ sf_open_fd	(int fd, int mode, SF_INFO *sfinfo, int close_desc)
 		return	NULL ;
 		} ;
 
-	psf_init_files (psf) ;
+	if (!close_desc)
+		psf->file.do_not_close_descriptor = SF_TRUE ;
+
+
 	copy_filename (psf, "") ;
 
 	psf->file.mode = mode ;
 	psf_set_file (psf, fd) ;
 	psf->is_pipe = psf_is_pipe (psf) ;
 	psf->fileoffset = psf_ftell (psf) ;
-
-	if (! close_desc)
-		psf->file.do_not_close_descriptor = SF_TRUE ;
 
 	return psf_open_file (psf, sfinfo) ;
 } /* sf_open_fd */
@@ -407,15 +405,28 @@ sf_open_virtual	(SF_VIRTUAL_IO *sfvirtual, int mode, SF_INFO *sfinfo, void *user
 		return	NULL ;
 		} ;
 
-	psf_init_files (psf) ;
+	SF_STREAM *stream = NULL ;
+	int error = psf_stream_open_virtual (sfvirtual, mode, user_data, &stream) ;
+	if (error == SFE_NO_ERROR)
+	{
+		psf->file.virtual_io = SF_TRUE ;
+		memcpy (&psf->file.vio, sfvirtual, sizeof (SF_VIRTUAL_IO)) ;
+		psf->file.vio_user_data = user_data ;
 
-	psf->virtual_io = SF_TRUE ;
-	psf->vio = *sfvirtual ;
-	psf->vio_user_data = user_data ;
+		psf->file.stream = stream ;
 
-	psf->file.mode = mode ;
+		psf->file.mode = mode ;
 
-	return psf_open_file (psf, sfinfo) ;
+		return psf_open_file (psf, sfinfo) ;
+	}
+	else
+	{
+		if (psf)
+			psf_close (psf) ;
+		sf_errno = error ;
+
+		return NULL ;
+	}
 } /* sf_open_virtual */
 
 int
@@ -2572,19 +2583,82 @@ sf_writef_double	(SNDFILE *sndfile, const double *ptr, sf_count_t frames)
 
 static int
 try_resource_fork (SF_PRIVATE * psf)
-{	int old_error = psf->error ;
+{	int error = SFE_NO_ERROR ;
+	char path [SF_FILENAME_LEN] ;
+	int mode = SFM_READ ;
+	SF_STREAM *stream = NULL ;
 
-	/* Set READ mode now, to see if resource fork exists. */
-	psf->rsrc.mode = SFM_READ ;
-	if (psf_open_rsrc (psf) != 0)
-	{	psf->error = old_error ;
+	/* Test for MacOSX style resource fork on HPFS or HPFS+ filesystems. */
+
+	snprintf (path, SF_FILENAME_LEN, "%s/..namedfork/rsrc", psf->file.path.c) ;
+
+	error = psf_file_stream_open (path, mode, &stream) ;
+	if (error == SFE_NO_ERROR)
+	{
+		psf->rsrclength = stream->vt->get_filelen (stream) ;
+		if (psf->rsrclength > 0 || (mode & SFM_WRITE))
+		{
+			error = SFE_NO_ERROR ;
+		}
+		else
+		{
+			error = SFE_SD2_BAD_RSRC ;
+		}
+
+		goto cleanup ;
+	}
+	if (stream)
+	{
+		stream->vt->unref (stream) ;
+		stream = NULL ;
+	}
+
+
+	/** Now try for a resource fork stored as a separate file in the same
+	** directory, but preceded with a dot underscore.
+	*/
+	snprintf (path, SF_FILENAME_LEN, "%s._%s", psf->file.dir.c, psf->file.name.c) ;
+
+	error = psf_file_stream_open (path, mode, &stream) ;
+	if (error == SFE_NO_ERROR)
+	{
+		psf->rsrclength = stream->vt->get_filelen (stream) ;
+		error = SFE_NO_ERROR ;
+
+		goto cleanup ;
+	}
+	if (stream)
+	{
+		stream->vt->unref (stream) ;
+		stream = NULL ;
+	}
+
+	/*
+	** Now try for a resource fork stored in a separate file in the
+	** .AppleDouble/ directory.
+	*/
+	snprintf (path, SF_FILENAME_LEN, "%s.AppleDouble/%s", psf->file.dir.c, psf->file.name.c) ;
+	error = psf_file_stream_open (path, mode, &stream) ;
+	if (error == SFE_NO_ERROR)
+	{
+		psf->rsrclength = stream->vt->get_filelen (stream) ;
+		error = SFE_NO_ERROR ;
+
+		goto cleanup ;
+	}
+
+cleanup:
+
+	if (error == SFE_NO_ERROR)
+		psf_log_printf (psf, "Resource fork : %s\n", path) ;
+
+	if (stream != NULL)
+		stream->vt->unref (stream) ;
+
+	if (error == SFE_NO_ERROR)
+		return SF_FORMAT_SD2 ;
+	else
 		return 0 ;
-		} ;
-
-	/* More checking here. */
-	psf_log_printf (psf, "Resource fork : %s\n", psf->rsrc.path.c) ;
-
-	return SF_FORMAT_SD2 ;
 } /* try_resource_fork */
 
 static int
@@ -2859,7 +2933,6 @@ psf_close (SF_PRIVATE *psf)
 		error = psf->container_close (psf) ;
 
 	error = psf_fclose (psf) ;
-	psf_close_rsrc (psf) ;
 
 	/* For an ISO C compliant implementation it is ok to free a NULL pointer. */
 	free (psf->header.ptr) ;

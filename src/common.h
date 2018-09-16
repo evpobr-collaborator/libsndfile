@@ -329,7 +329,30 @@ psf_isprint (int ch)
 **	contents.
 */
 
-typedef struct
+typedef int	(*sf_vio_truncate) (void *user_data, sf_count_t len) ;
+typedef int	(*sf_vio_sync) (void *user_data) ;
+typedef int	(*sf_vio_is_pipe) (void *user_data) ;
+typedef unsigned long (*sf_vio_ref) (void *user_data) ;
+typedef unsigned long (*sf_vio_unref) (void *user_data) ;
+
+typedef struct SF_VIRTUAL_IO_EX
+{	sf_vio_get_filelen	get_filelen ;
+	sf_vio_seek			seek ;
+	sf_vio_read			read ;
+	sf_vio_write		write ;
+	sf_vio_tell			tell ;
+	sf_vio_truncate		truncate ;
+	sf_vio_sync			sync ;
+	sf_vio_is_pipe		is_pipe ;
+	sf_vio_ref			ref ;
+	sf_vio_unref		unref ;
+} SF_VIRTUAL_IO_EX ;
+
+typedef struct SF_STREAM
+{ SF_VIRTUAL_IO_EX *vt ;
+} SF_STREAM ;
+
+typedef struct PSF_FILE
 {
 	union
 	{	char		c [SF_FILENAME_LEN] ;
@@ -346,24 +369,17 @@ typedef struct
 		sfwchar_t	wc [SF_FILENAME_LEN / 4] ;
 	} name ;
 
-#if USE_WINDOWS_API
-	/*
-	**	These fields can only be used in src/file_io.c.
-	**	They are basically the same as a windows file HANDLE.
-	*/
-	void 			*handle, *hsaved ;
+	SF_STREAM			*stream ;
 
-	int				use_wchar ;
-#else
-	/* These fields can only be used in src/file_io.c. */
-	int 			filedes, savedes ;
-#endif
+	/* Virtual I/O functions. */
+	int					virtual_io ;
+	SF_VIRTUAL_IO_EX	vio ;
+	void				*vio_user_data ;
 
-	int				do_not_close_descriptor ;
-	int				mode ;			/* Open mode : SFM_READ, SFM_WRITE or SFM_RDWR. */
+	int					do_not_close_descriptor ;
+	int					use_wchar ;
+	int					mode ;			/* Open mode : SFM_READ, SFM_WRITE or SFM_RDWR. */
 } PSF_FILE ;
-
-
 
 typedef union
 {	double			dbuf	[SF_BUFFER_LEN / sizeof (double)] ;
@@ -391,7 +407,7 @@ typedef struct sf_private_tag
 		char c [16] ;
 		} canary ;
 
-	PSF_FILE		file, rsrc ;
+	PSF_FILE file ;
 
 	char			syserr		[SF_SYSERR_LEN] ;
 
@@ -530,11 +546,6 @@ typedef struct sf_private_tag
 	int				(*container_close)	(struct sf_private_tag*) ;
 
 	char			*format_desc ;
-
-	/* Virtual I/O functions. */
-	int					virtual_io ;
-	SF_VIRTUAL_IO		vio ;
-	void				*vio_user_data ;
 
 	/* Chunk get/set. */
 	SF_CHUNK_ITERATOR	*iterator ;
@@ -846,19 +857,22 @@ int macos_guess_file_type (SF_PRIVATE *psf, const char *filename) ;
 **	some 32 bit OSes. Implementation in file_io.c.
 */
 
+#define	SENSIBLE_SIZE	(0x40000000)
+
 int psf_fopen (SF_PRIVATE *psf) ;
 int psf_set_stdio (SF_PRIVATE *psf) ;
+#if USE_WINDOWS_API == 1
+int psf_file_stream_open_stdio_win32 (int mode, SF_STREAM **stream) ;
+#endif
+
 int psf_file_valid (SF_PRIVATE *psf) ;
 void psf_set_file (SF_PRIVATE *psf, int fd) ;
-void psf_init_files (SF_PRIVATE *psf) ;
-void psf_use_rsrc (SF_PRIVATE *psf, int on_off) ;
 
 SNDFILE * psf_open_file (SF_PRIVATE *psf, SF_INFO *sfinfo) ;
 
 sf_count_t psf_fseek (SF_PRIVATE *psf, sf_count_t offset, int whence) ;
 sf_count_t psf_fread (void *ptr, sf_count_t bytes, sf_count_t count, SF_PRIVATE *psf) ;
 sf_count_t psf_fwrite (const void *ptr, sf_count_t bytes, sf_count_t count, SF_PRIVATE *psf) ;
-sf_count_t psf_fgets (char *buffer, sf_count_t bufsize, SF_PRIVATE *psf) ;
 sf_count_t psf_ftell (SF_PRIVATE *psf) ;
 sf_count_t psf_get_filelen (SF_PRIVATE *psf) ;
 
@@ -869,14 +883,44 @@ int psf_is_pipe (SF_PRIVATE *psf) ;
 int psf_ftruncate (SF_PRIVATE *psf, sf_count_t len) ;
 int psf_fclose (SF_PRIVATE *psf) ;
 
-/* Open and close the resource fork of a file. */
-int psf_open_rsrc (SF_PRIVATE *psf) ;
-int psf_close_rsrc (SF_PRIVATE *psf) ;
+void psf_log_syserr (char *syserr, size_t len) ;
+void psf_posix_log_syserr (char *syserr, size_t len) ;
 
 /*
 void psf_fclearerr (SF_PRIVATE *psf) ;
 int psf_ferror (SF_PRIVATE *psf) ;
 */
+
+int psf_file_stream_open (const char *path, int mode, SF_STREAM **stream) ;
+#ifdef _WIN32
+int psf_file_stream_openW (const wchar_t *path, int mode, SF_STREAM **stream) ;
+#endif
+
+
+#if USE_WINDOWS_API == 1
+int psf_file_stream_open_win32 (const char *path, int mode, SF_STREAM **stream) ;
+int psf_file_stream_open_win32W (const wchar_t *path, int mode, SF_STREAM **stream) ;
+#endif
+
+int psf_file_stream_open_posix (const char *path, int mode, SF_STREAM **stream) ;
+#ifdef _WIN32
+int psf_file_stream_open_posixW (const wchar_t *path, int mode, SF_STREAM **stream) ;
+#endif
+
+int psf_file_stream_open_fd (int fd, int do_not_close_descriptor, SF_STREAM **stream) ;
+int psf_file_stream_open_fd_posix (int fd, int do_not_close_descriptor, SF_STREAM **stream) ;
+#ifdef _WIN32
+int psf_file_stream_open_fd_win32 (int fd, int do_not_close_descriptor, SF_STREAM **stream) ;
+#endif
+
+int psf_file_stream_open_stdio (int mode, SF_STREAM **stream) ;
+#ifdef _WIN32
+int psf_file_stream_open_stdio_win32 (int mode, SF_STREAM **stream) ;
+#else
+int psf_file_stream_open_stdio_posix (int mode, SF_STREAM **stream) ;
+#endif
+
+int psf_stream_open_virtual (SF_VIRTUAL_IO *sfvirtual, int mode, void *user_data, SF_STREAM **stream) ;
 
 /*------------------------------------------------------------------------------------
 ** Functions for reading and writing different file formats.

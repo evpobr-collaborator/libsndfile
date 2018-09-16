@@ -274,7 +274,16 @@ add_library (sndfile
 	src/ALAC/alac_encoder.c
 	${sndfile_HDRS}
 	${CMAKE_CURRENT_BINARY_DIR}/src/config.h
+	src/psx_stm.c
+	src/virt_stm.c
 	)
+
+if (WIN32)
+	target_sources (sndfile
+		PRIVATE
+			src/win_stm.c
+		)
+endif ()
 
 target_include_directories(sndfile
 	PUBLIC

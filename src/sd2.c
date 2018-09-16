@@ -82,16 +82,23 @@ typedef struct
 	int value_len ;
 } STR_RSRC ;
 
+typedef struct SD2_PRIVATE
+{
+	SF_STREAM *rsrc_stream ;
+} SD2_PRIVATE ;
+
 /*------------------------------------------------------------------------------
  * Private static functions.
 */
 
 static int sd2_close	(SF_PRIVATE *psf) ;
 
-static int sd2_parse_rsrc_fork (SF_PRIVATE *psf) ;
+static int sd2_parse_rsrc_fork (SF_PRIVATE *psf, SF_STREAM *rsrc_stream) ;
 static int parse_str_rsrc (SF_PRIVATE *psf, SD2_RSRC * rsrc) ;
 
-static int sd2_write_rsrc_fork (SF_PRIVATE *psf, int calc_length) ;
+static int sd2_write_rsrc_fork (SF_PRIVATE *psf, SF_STREAM *rsrc_stream, int calc_length) ;
+
+static int sd2_open_rsrc_fork (const char *path, const char *dir, int mode, SF_STREAM **stream) ;
 
 /*------------------------------------------------------------------------------
 ** Public functions.
@@ -99,21 +106,32 @@ static int sd2_write_rsrc_fork (SF_PRIVATE *psf, int calc_length) ;
 
 int
 sd2_open (SF_PRIVATE *psf)
-{	int subformat, error = 0, valid ;
+{	int subformat, error = 0 ;
 
 	/* SD2 is always big endian. */
 	psf->endian = SF_ENDIAN_BIG ;
+	psf->dataoffset = 0 ;
+
+	// SD2_PRIVATE *sd2 = calloc (1, sizeof (SD2_PRIVATE)) ;
+	// if (!sd2)
+	// {	psf_log_printf (psf, "%s : sd2 is NULL???\n", __func__) ;
+	// 	return SFE_INTERNAL ;
+	// 	} ;
+
+	SF_STREAM *rsrc_stream = NULL ;
+	error = sd2_open_rsrc_fork (psf->file.name.c, psf->file.dir.c, psf->file.mode, &rsrc_stream) ;
+	if (error != SFE_NO_ERROR)
+		goto error_cleanup ;
+
+	psf->rsrclength = rsrc_stream->vt->get_filelen (rsrc_stream) ;
+
+	// rsrc_stream->vt->seek (0, SF_SEEK_SET, rsrc_stream) ;
+
+	// sd2->rsrc_stream = rsrc_stream ;
+	// psf->container_data = sd2 ;
 
 	if (psf->file.mode == SFM_READ || (psf->file.mode == SFM_RDWR && psf->rsrclength > 0))
-	{	psf_use_rsrc (psf, SF_TRUE) ;
-		valid = psf_file_valid (psf) ;
-		psf_use_rsrc (psf, SF_FALSE) ;
-		if (! valid)
-		{	psf_log_printf (psf, "sd2_open : psf->rsrc.filedes < 0\n") ;
-			return SFE_SD2_BAD_RSRC ;
-			} ;
-
-		error = sd2_parse_rsrc_fork (psf) ;
+	{	error = sd2_parse_rsrc_fork (psf, rsrc_stream) ;
 
 		if (error)
 			goto error_cleanup ;
@@ -125,14 +143,13 @@ sd2_open (SF_PRIVATE *psf)
 		} ;
 
 	subformat = SF_CODEC (psf->sf.format) ;
-	psf->dataoffset = 0 ;
 
 	/* Only open and write the resource in RDWR mode is its current length is zero. */
 	if (psf->file.mode == SFM_WRITE || (psf->file.mode == SFM_RDWR && psf->rsrclength == 0))
-	{	psf->rsrc.mode = psf->file.mode ;
-		psf_open_rsrc (psf) ;
+	{	//psf->rsrc.mode = psf->file.mode ;
+		//psf_open_rsrc (psf) ;
 
-		error = sd2_write_rsrc_fork (psf, SF_FALSE) ;
+		error = sd2_write_rsrc_fork (psf, rsrc_stream, SF_FALSE) ;
 
 		if (error)
 			goto error_cleanup ;
@@ -158,12 +175,16 @@ sd2_open (SF_PRIVATE *psf)
 				break ;
 		} ;
 
+	//rsrc_stream->vt->seek (psf->dataoffset, SEEK_SET, rsrc_stream) ;
 	psf_fseek (psf, psf->dataoffset, SEEK_SET) ;
 
 error_cleanup:
 
 	/* Close the resource fork regardless. We won't need it again. */
-	psf_close_rsrc (psf) ;
+	if (rsrc_stream)
+		rsrc_stream->vt->unref (rsrc_stream) ;
+	rsrc_stream = NULL ;
+	//psf_close_rsrc (psf) ;
 
 	return error ;
 } /* sd2_open */
@@ -181,6 +202,16 @@ sd2_close	(SF_PRIVATE *psf)
 
 		} ;
 
+	// SD2_PRIVATE *sd2 = (SD2_PRIVATE *) psf->container_data ;
+	// if (sd2)
+	// {
+	// 	if (sd2->rsrc_stream)
+	// 	{
+	// 		sd2->rsrc_stream->vt->unref (sd2->rsrc_stream) ;
+	// 	}
+
+	// }
+
 	return 0 ;
 } /* sd2_close */
 
@@ -188,7 +219,7 @@ sd2_close	(SF_PRIVATE *psf)
 */
 
 static int
-sd2_write_rsrc_fork (SF_PRIVATE *psf, int UNUSED (calc_length))
+sd2_write_rsrc_fork (SF_PRIVATE *psf, SF_STREAM *rsrc_stream, int UNUSED (calc_length))
 {	SD2_RSRC rsrc ;
 	STR_RSRC str_rsrc [] =
 	{	{ RSRC_STR, 1000, "_sample-size", "", 0 },
@@ -199,7 +230,7 @@ sd2_write_rsrc_fork (SF_PRIVATE *psf, int UNUSED (calc_length))
 
 	int k, str_offset, data_offset, next_str ;
 
-	psf_use_rsrc (psf, SF_TRUE) ;
+	//sd2_switch_rsrc_and_file_streams (psf) ;
 
 	memset (&rsrc, 0, sizeof (rsrc)) ;
 
@@ -296,9 +327,10 @@ sd2_write_rsrc_fork (SF_PRIVATE *psf, int UNUSED (calc_length))
 
 	psf->header.indx = rsrc.map_offset + rsrc.map_length ;
 
-	psf_fwrite (psf->header.ptr, psf->header.indx, 1, psf) ;
+	rsrc_stream->vt->write (psf->header.ptr, psf->header.indx, rsrc_stream) ;
+	//psf_fwrite (psf->header.ptr, psf->header.indx, 1, psf) ;
 
-	psf_use_rsrc (psf, SF_FALSE) ;
+	//sd2_switch_rsrc_and_file_streams (psf) ;
 
 	if (psf->error)
 		return psf->error ;
@@ -367,15 +399,16 @@ read_rsrc_str (const SD2_RSRC *prsrc, int offset, char * buffer, int buffer_len)
 } /* read_rsrc_str */
 
 static int
-sd2_parse_rsrc_fork (SF_PRIVATE *psf)
+sd2_parse_rsrc_fork (SF_PRIVATE *psf, SF_STREAM *rsrc_stream)
 {	SD2_RSRC rsrc ;
 	int k, marker, error = 0 ;
 
-	psf_use_rsrc (psf, SF_TRUE) ;
+	//sd2_switch_rsrc_and_file_streams (psf) ;
 
 	memset (&rsrc, 0, sizeof (rsrc)) ;
 
-	rsrc.rsrc_len = psf_get_filelen (psf) ;
+	rsrc.rsrc_len = rsrc_stream->vt->get_filelen (rsrc_stream) ;
+
 	psf_log_printf (psf, "Resource length : %d (0x%04X)\n", rsrc.rsrc_len, rsrc.rsrc_len) ;
 
 	if (rsrc.rsrc_len > psf->header.len)
@@ -385,15 +418,15 @@ sd2_parse_rsrc_fork (SF_PRIVATE *psf)
 	else
 	{
 		rsrc.rsrc_data = psf->header.ptr ;
-		// rsrc.rsrc_len > psf->header.len ;
 		rsrc.need_to_free_rsrc_data = SF_FALSE ;
 		} ;
 
 	/* Read in the whole lot. */
-	psf_fread (rsrc.rsrc_data, rsrc.rsrc_len, 1, psf) ;
+	rsrc_stream->vt->read (rsrc.rsrc_data, rsrc.rsrc_len, rsrc_stream) ;
+	//psf_fread (rsrc.rsrc_data, rsrc.rsrc_len, 1, psf) ;
 
 	/* Reset the header storage because we have changed to the rsrcdes. */
-	psf->header.indx = psf->header.end = rsrc.rsrc_len ;
+	//psf->header.indx = psf->header.end = rsrc.rsrc_len ;
 
 	rsrc.data_offset = read_rsrc_int (&rsrc, 0) ;
 	rsrc.map_offset = read_rsrc_int (&rsrc, 4) ;
@@ -498,7 +531,7 @@ sd2_parse_rsrc_fork (SF_PRIVATE *psf)
 
 parse_rsrc_fork_cleanup :
 
-	psf_use_rsrc (psf, SF_FALSE) ;
+	//sd2_switch_rsrc_and_file_streams (psf) ;
 
 	if (rsrc.need_to_free_rsrc_data)
 		free (rsrc.rsrc_data) ;
@@ -605,3 +638,67 @@ parse_str_rsrc (SF_PRIVATE *psf, SD2_RSRC * rsrc)
 	return 0 ;
 } /* parse_str_rsrc */
 
+static int
+sd2_open_rsrc_fork (const char *path, const char *dir, int mode, SF_STREAM **stream)
+{	int error = SFE_NO_ERROR ;
+	char rsrc_path [SF_FILENAME_LEN] ;
+	SF_STREAM *rsrc_stream = NULL ;
+
+	if (!stream)
+		return SFE_BAD_FILE_PTR ;
+
+	*stream = NULL ;
+
+	/* Test for MacOSX style resource fork on HPFS or HPFS+ filesystems. */
+
+	snprintf (rsrc_path, SF_FILENAME_LEN, "%s/..namedfork/rsrc", path) ;
+
+	error = psf_file_stream_open (rsrc_path, mode, &rsrc_stream) ;
+	if (error == SFE_NO_ERROR)
+	{
+		*stream = rsrc_stream ;
+		return SFE_NO_ERROR ;
+	}
+	else if (rsrc_stream)
+	{
+		rsrc_stream->vt->unref (rsrc_stream) ;
+		rsrc_stream = NULL ;
+	}
+
+
+	/** Now try for a resource fork stored as a separate file in the same
+	** directory, but preceded with a dot underscore.
+	*/
+	snprintf (rsrc_path, SF_FILENAME_LEN, "%s._%s", dir, path) ;
+
+	error = psf_file_stream_open (rsrc_path, mode, &rsrc_stream) ;
+	if (error == SFE_NO_ERROR)
+	{
+		*stream = rsrc_stream ;
+		return SFE_NO_ERROR ;
+	}
+	else if (rsrc_stream)
+	{
+		rsrc_stream->vt->unref (rsrc_stream) ;
+		rsrc_stream = NULL ;
+	}
+
+	/*
+	** Now try for a resource fork stored in a separate file in the
+	** .AppleDouble/ directory.
+	*/
+	snprintf (rsrc_path, SF_FILENAME_LEN, "%s.AppleDouble/%s", dir, path) ;
+	error = psf_file_stream_open (rsrc_path, mode, &rsrc_stream) ;
+	if (error == SFE_NO_ERROR)
+	{
+		*stream = rsrc_stream ;
+		return SFE_NO_ERROR ;
+	}
+	else if (rsrc_stream)
+	{
+		rsrc_stream->vt->unref (rsrc_stream) ;
+		rsrc_stream = NULL ;
+	}
+
+	return SFE_SD2_BAD_RSRC ;
+}
