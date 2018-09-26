@@ -20,7 +20,7 @@
 
 #include <stdarg.h>
 #include <string.h>
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #else
 #include "sf_unistd.h"
@@ -28,7 +28,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <time.h>
-#if HAVE_SYS_TIME_H
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 #include "sndfile.h"
@@ -1393,7 +1393,7 @@ psf_rand_int32 (void)
 
 	if (value == 0)
 	{
-#if HAVE_GETTIMEOFDAY
+#ifdef HAVE_GETTIMEOFDAY
 		struct timeval tv ;
 		gettimeofday (&tv, NULL) ;
 		value = tv.tv_sec + tv.tv_usec ;

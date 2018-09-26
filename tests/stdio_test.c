@@ -21,13 +21,13 @@
 ** stdout.
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #else
 #include "sf_unistd.h"
@@ -36,7 +36,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#if HAVE_SYS_WAIT_H
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
 

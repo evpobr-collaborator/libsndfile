@@ -16,7 +16,7 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +24,7 @@
 #include <math.h>
 #include <inttypes.h>
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #else
 #include "sf_unistd.h"
@@ -67,7 +67,7 @@ main (int argc, char *argv [])
 	if (argc == 2 && ! strstr (argv [1], "no-exit"))
 		allow_exit = 0 ;
 
-#if (HAVE_LRINTF == 0)
+#ifndef HAVE_LRINTF
 	puts ("*** Cannot run this test on this platform because it lacks lrintf().") ;
 	exit (0) ;
 #endif
@@ -119,7 +119,7 @@ main (int argc, char *argv [])
 	float_scaled_test	("alac_24.caf", allow_exit, SF_FALSE, SF_FORMAT_CAF | SF_FORMAT_ALAC_24, -153.0) ;
 	float_scaled_test	("alac_20.caf", allow_exit, SF_FALSE, SF_FORMAT_CAF | SF_FORMAT_ALAC_20, -125.0) ;
 
-#if HAVE_EXTERNAL_XIPH_LIBS
+#ifdef HAVE_EXTERNAL_XIPH_LIBS
 	float_scaled_test	("flac_8.flac", allow_exit, SF_FALSE, SF_FORMAT_FLAC | SF_FORMAT_PCM_S8, -39.0) ;
 	float_scaled_test	("flac_16.flac", allow_exit, SF_FALSE, SF_FORMAT_FLAC | SF_FORMAT_PCM_16, -87.0) ;
 	float_scaled_test	("flac_24.flac", allow_exit, SF_FALSE, SF_FORMAT_FLAC | SF_FORMAT_PCM_24, -138.0) ;
@@ -176,7 +176,7 @@ main (int argc, char *argv [])
 	double_scaled_test	("alac_24.caf", allow_exit, SF_FALSE, SF_FORMAT_CAF | SF_FORMAT_ALAC_24, -153.0) ;
 	double_scaled_test	("alac_32.caf", allow_exit, SF_FALSE, SF_FORMAT_CAF | SF_FORMAT_ALAC_32, -186.0) ;
 
-#if HAVE_EXTERNAL_XIPH_LIBS
+#ifdef HAVE_EXTERNAL_XIPH_LIBS
 	double_scaled_test	("flac_8.flac", allow_exit, SF_FALSE, SF_FORMAT_FLAC | SF_FORMAT_PCM_S8, -39.0) ;
 	double_scaled_test	("flac_16.flac", allow_exit, SF_FALSE, SF_FORMAT_FLAC | SF_FORMAT_PCM_16, -87.0) ;
 	double_scaled_test	("flac_24.flac", allow_exit, SF_FALSE, SF_FORMAT_FLAC | SF_FORMAT_PCM_24, -138.0) ;

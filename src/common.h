@@ -19,17 +19,17 @@
 #ifndef SNDFILE_COMMON_H
 #define SNDFILE_COMMON_H
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-#if HAVE_STDINT_H
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#elif HAVE_INTTYPES_H
+#elif defined(HAVE_INTTYPES_H)
 #include <inttypes.h>
 #endif
-#if HAVE_SYS_TYPES_H
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 
@@ -47,7 +47,7 @@
 #	define	SF_PLATFORM_S64(x)		x##l
 #elif (SIZEOF_LONG_LONG == 8)
 #	define	SF_PLATFORM_S64(x)		x##ll
-#elif COMPILER_IS_GCC
+#elif defined(COMPILER_IS_GCC)
 #	define	SF_PLATFORM_S64(x)		x##ll
 #elif OS_IS_WIN32
 #	define	SF_PLATFORM_S64(x)		x##I64
@@ -95,7 +95,7 @@
 
 #define		NOT(x)			(! (x))
 
-#if COMPILER_IS_GCC
+#ifdef COMPILER_IS_GCC
 #define		SF_MAX(x, y)	({ \
 								typeof (x) sf_max_x1 = (x) ; \
 								typeof (y) sf_max_y1 = (y) ; \

@@ -16,7 +16,7 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +25,7 @@
 #include <inttypes.h>
 
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #else
 #include "sf_unistd.h"
@@ -371,13 +371,14 @@ main (int argc, char **argv)
 		} ;
 
 	if (do_all || ! strcmp (argv [1], "flac"))
-	{	if (HAVE_EXTERNAL_XIPH_LIBS)
-		{	pcm_test_char	("char.flac"	, SF_FORMAT_FLAC | SF_FORMAT_PCM_S8, SF_TRUE) ;
-			pcm_test_short	("short.flac"	, SF_FORMAT_FLAC | SF_FORMAT_PCM_16, SF_TRUE) ;
-			pcm_test_24bit	("24bit.flac"	, SF_FORMAT_FLAC | SF_FORMAT_PCM_24, SF_TRUE) ;
-			}
-		else
-			puts ("    No FLAC tests because FLAC support was not compiled in.") ;
+	{
+#ifdef HAVE_EXTERNAL_XIPH_LIBS
+		pcm_test_char	("char.flac"	, SF_FORMAT_FLAC | SF_FORMAT_PCM_S8, SF_TRUE) ;
+		pcm_test_short	("short.flac"	, SF_FORMAT_FLAC | SF_FORMAT_PCM_16, SF_TRUE) ;
+		pcm_test_24bit	("24bit.flac"	, SF_FORMAT_FLAC | SF_FORMAT_PCM_24, SF_TRUE) ;
+#else
+		puts ("    No FLAC tests because FLAC support was not compiled in.") ;
+#endif
 		test_count++ ;
 		} ;
 

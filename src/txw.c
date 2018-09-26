@@ -23,7 +23,7 @@
 ** and trial and error experimentation. The code here however is all original.
 */
 
-#include	"sfconfig.h"
+#include	"config.h"
 
 #include	<stdio.h>
 #include	<fcntl.h>
@@ -34,7 +34,7 @@
 #include	"sfendian.h"
 #include	"common.h"
 
-#if (ENABLE_EXPERIMENTAL_CODE == 0)
+#ifndef ENABLE_EXPERIMENTAL_CODE
 
 int
 txw_open	(SF_PRIVATE *psf)

@@ -25,7 +25,7 @@
 **	http://www.ebu.ch/CMSimages/en/tec_doc_t3306-2007_tcm6-42570.pdf
 */
 
-#include	"sfconfig.h"
+#include	"config.h"
 
 #include	<stdio.h>
 #include	<fcntl.h>

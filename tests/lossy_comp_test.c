@@ -16,7 +16,7 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +25,7 @@
 #include <inttypes.h>
 
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #else
 #include "sf_unistd.h"
@@ -450,15 +450,16 @@ main (int argc, char *argv [])
 	/* Lite remove end */
 
 	if (do_all || strcmp (argv [1], "ogg_vorbis") == 0)
-	{	if (HAVE_EXTERNAL_XIPH_LIBS)
-		{	/* Don't do lcomp_test_XXX as the errors are too big. */
-			sdlcomp_test_short	("vorbis.oga", SF_FORMAT_OGG | SF_FORMAT_VORBIS, 1, 0.30) ;
-			sdlcomp_test_int	("vorbis.oga", SF_FORMAT_OGG | SF_FORMAT_VORBIS, 1, 0.30) ;
-			sdlcomp_test_float	("vorbis.oga", SF_FORMAT_OGG | SF_FORMAT_VORBIS, 1, 0.30) ;
-			sdlcomp_test_double	("vorbis.oga", SF_FORMAT_OGG | SF_FORMAT_VORBIS, 1, 0.30) ;
-			}
-		else
-			puts ("    No Ogg/Vorbis tests because Ogg/Vorbis support was not compiled in.") ;
+	{
+#ifdef HAVE_EXTERNAL_XIPH_LIBS
+		/* Don't do lcomp_test_XXX as the errors are too big. */
+		sdlcomp_test_short	("vorbis.oga", SF_FORMAT_OGG | SF_FORMAT_VORBIS, 1, 0.30) ;
+		sdlcomp_test_int	("vorbis.oga", SF_FORMAT_OGG | SF_FORMAT_VORBIS, 1, 0.30) ;
+		sdlcomp_test_float	("vorbis.oga", SF_FORMAT_OGG | SF_FORMAT_VORBIS, 1, 0.30) ;
+		sdlcomp_test_double	("vorbis.oga", SF_FORMAT_OGG | SF_FORMAT_VORBIS, 1, 0.30) ;
+#else
+		puts ("    No Ogg/Vorbis tests because Ogg/Vorbis support was not compiled in.") ;
+#endif
 
 		test_count++ ;
 		} ;

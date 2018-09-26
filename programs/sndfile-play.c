@@ -30,14 +30,14 @@
 ** ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #else
 #include "sf_unistd.h"
@@ -47,7 +47,7 @@
 
 #include "common.h"
 
-#if HAVE_ALSA_ASOUNDLIB_H
+#ifdef HAVE_ALSA_ASOUNDLIB_H
 	#define ALSA_PCM_NEW_HW_PARAMS_API
 	#define ALSA_PCM_NEW_SW_PARAMS_API
 	#include <alsa/asoundlib.h>
@@ -61,7 +61,7 @@
 	#include 	<sys/ioctl.h>
 	#include 	<sys/soundcard.h>
 
-#elif HAVE_SNDIO_H
+#elif defined(HAVE_SNDIO_H)
 	#include <sndio.h>
 
 #elif (defined (sun) && defined (unix))
@@ -82,7 +82,7 @@
 **	Linux/OSS functions for playing a sound.
 */
 
-#if HAVE_ALSA_ASOUNDLIB_H
+#ifdef HAVE_ALSA_ASOUNDLIB_H
 
 static snd_pcm_t * alsa_open (int channels, unsigned srate, int realtime) ;
 static int alsa_write_float (snd_pcm_t *alsa_dev, float *data, int frames, int channels) ;
@@ -666,7 +666,7 @@ win32_play (int argc, char *argv [])
 **	OpenBSD's sndio.
 */
 
-#if HAVE_SNDIO_H
+#if defined(HAVE_SNDIO_H)
 
 static void
 sndio_play (int argc, char *argv [])
@@ -834,7 +834,7 @@ main (int argc, char *argv [])
 	puts ("*** Please feel free to submit a patch.") ;
 	return 1 ;
 #elif defined (__linux__)
-	#if HAVE_ALSA_ASOUNDLIB_H
+	#ifdef HAVE_ALSA_ASOUNDLIB_H
 		if (access ("/proc/asound/cards", R_OK) == 0)
 			alsa_play (argc, argv) ;
 		else
@@ -842,7 +842,7 @@ main (int argc, char *argv [])
 		opensoundsys_play (argc, argv) ;
 #elif defined (__FreeBSD_kernel__) || defined (__FreeBSD__)
 	opensoundsys_play (argc, argv) ;
-#elif HAVE_SNDIO_H
+#elif defined(HAVE_SNDIO_H)
 	sndio_play (argc, argv) ;
 #elif (defined (sun) && defined (unix))
 	solaris_play (argc, argv) ;

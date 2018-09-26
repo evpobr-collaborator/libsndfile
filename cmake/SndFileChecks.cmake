@@ -39,7 +39,6 @@ find_package (Speex)
 find_package (SQLite3)
 
 check_include_file (byteswap.h		HAVE_BYTESWAP_H)
-check_include_file (dlfcn.h			HAVE_DLFCN_H)
 check_include_file (direct.h		HAVE_DIRECT_H)
 check_include_file (endian.h		HAVE_ENDIAN_H)
 check_include_file (inttypes.h		HAVE_INTTYPES_H)
@@ -48,13 +47,6 @@ check_include_file (stdint.h		HAVE_STDINT_H)
 check_include_file (sys/time.h		HAVE_SYS_TIME_H)
 check_include_file (sys/types.h		HAVE_SYS_TYPES_H)
 check_include_file (unistd.h		HAVE_UNISTD_H)
-
-# Never checked
-# check_include_file (stdlib.h		HAVE_STDLIB_H)
-# check_include_file (string.h		HAVE_STRING_H)
-# check_include_file (strings.h		HAVE_STRINGS_H)
-# check_include_file (sys/stat.h	HAVE_SYS_STAT_H)
-# check_include_file (memory.h		HAVE_MEMORY_H)
 
 if (BUILD_TESTING)
 	check_include_file (locale.h	HAVE_LOCALE_H)
@@ -115,7 +107,6 @@ endif ()
 
 check_library_exists (sqlite3 sqlite3_close "" HAVE_SQLITE3)
 
-check_function_exists (fstat     		HAVE_FSTAT)
 check_function_exists (fstat64			HAVE_FSTAT64)
 check_function_exists (gettimeofday		HAVE_GETTIMEOFDAY)
 check_function_exists (gmtime			HAVE_GMTIME)
@@ -123,8 +114,6 @@ check_function_exists (gmtime_r			HAVE_GMTIME_R)
 check_function_exists (localtime		HAVE_LOCALTIME)
 check_function_exists (localtime_r		HAVE_LOCALTIME_R)
 check_function_exists (lseek      		HAVE_LSEEK)
-check_function_exists (open				HAVE_OPEN)
-check_function_exists (read				HAVE_READ)
 check_function_exists (write			HAVE_WRITE)
 check_function_exists (lrint			HAVE_LRINT)
 check_function_exists (lrintf			HAVE_LRINTF)
@@ -139,23 +128,6 @@ if (BUILD_TESTING)
 	check_function_exists (setlocale	HAVE_SETLOCALE)
 	check_function_exists (waitpid		HAVE_WAITPID)
 endif ()
-
-# Never checked
-# check_function_exists (calloc			HAVE_CALLOC)
-# check_function_exists (free			HAVE_FREE)
-# check_function_exists (getpagesize	HAVE_GETPAGESIZE)
-# check_function_exists (malloc			HAVE_MALLOC)
-# check_function_exists (realloc		HAVE_REALLOC)
-# check_function_exists (snprintf		HAVE_SNPRINTF)
-# check_function_exists (vsnprintf		HAVE_VSNPRINTF)
-# check_function_exists (floor			HAVE_FLOOR)
-# check_function_exists (fmod			HAVE_FMOD)
-
-# Never used
-# check_function_exists (mmap			HAVE_MMAP)
-# check_function_exists (ceil			HAVE_CEIL)
-# check_function_exists (lround			HAVE_LROUND)
-# check_function_exists (lseek64		HAVE_LSEEK64)
 
 
 check_symbol_exists (S_IRGRP sys/stat.h HAVE_DECL_S_IRGRP)

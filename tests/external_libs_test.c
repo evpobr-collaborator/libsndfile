@@ -16,14 +16,14 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #else
 #include "sf_unistd.h"
@@ -45,8 +45,9 @@ main (void)
 	subtype_format_test () ;
 	simple_format_test () ;
 
-	if (HAVE_EXTERNAL_XIPH_LIBS)
+#ifdef HAVE_EXTERNAL_XIPH_LIBS
 		flac_subset_test () ;
+#endif
 
 	return 0 ;
 } /* main */
@@ -69,14 +70,13 @@ major_format_test (void)
 		have_ogg = info.format == SF_FORMAT_OGG ? 1 : have_ogg ;
 		} ;
 
-	if (HAVE_EXTERNAL_XIPH_LIBS)
-	{	exit_if_true (have_flac == 0, "\n\nLine %d : FLAC should be available.\n\n", __LINE__) ;
+#ifdef HAVE_EXTERNAL_XIPH_LIBS
+		exit_if_true (have_flac == 0, "\n\nLine %d : FLAC should be available.\n\n", __LINE__) ;
 		exit_if_true (have_ogg == 0, "\n\nLine %d : Ogg/Vorbis should be available.\n\n", __LINE__) ;
-		}
-	else
-	{	exit_if_true (have_flac, "\n\nLine %d : FLAC should not be available.\n\n", __LINE__) ;
+#else
+		exit_if_true (have_flac, "\n\nLine %d : FLAC should not be available.\n\n", __LINE__) ;
 		exit_if_true (have_ogg, "\n\nLine %d : Ogg/Vorbis should not be available.\n\n", __LINE__) ;
-		} ;
+#endif
 
 	puts ("ok") ;
 } /* major_format_test */
@@ -98,10 +98,11 @@ subtype_format_test (void)
 		have_vorbis = info.format == SF_FORMAT_VORBIS ? 1 : have_vorbis ;
 		} ;
 
-	if (HAVE_EXTERNAL_XIPH_LIBS)
+#ifdef HAVE_EXTERNAL_XIPH_LIBS
 		exit_if_true (have_vorbis == 0, "\n\nLine %d : Ogg/Vorbis should be available.\n\n", __LINE__) ;
-	else
+#else
 		exit_if_true (have_vorbis, "\n\nLine %d : Ogg/Vorbis should not be available.\n\n", __LINE__) ;
+#endif
 
 	puts ("ok") ;
 } /* subtype_format_test */
@@ -144,16 +145,15 @@ simple_format_test (void)
 
 		} ;
 
-	if (HAVE_EXTERNAL_XIPH_LIBS)
-	{	exit_if_true (have_flac == 0, "\n\nLine %d : FLAC should be available.\n\n", __LINE__) ;
+#ifdef HAVE_EXTERNAL_XIPH_LIBS
+		exit_if_true (have_flac == 0, "\n\nLine %d : FLAC should be available.\n\n", __LINE__) ;
 		exit_if_true (have_ogg == 0, "\n\nLine %d : Ogg/Vorbis should be available.\n\n", __LINE__) ;
 		exit_if_true (have_vorbis == 0, "\n\nLine %d : Ogg/Vorbis should be available.\n\n", __LINE__) ;
-		}
-	else
-	{	exit_if_true (have_flac, "\n\nLine %d : FLAC should not be available.\n\n", __LINE__) ;
+#else
+		exit_if_true (have_flac, "\n\nLine %d : FLAC should not be available.\n\n", __LINE__) ;
 		exit_if_true (have_ogg, "\n\nLine %d : Ogg/Vorbis should not be available.\n\n", __LINE__) ;
 		exit_if_true (have_vorbis, "\n\nLine %d : Ogg/Vorbis should not be available.\n\n", __LINE__) ;
-		} ;
+#endif
 
 	puts ("ok") ;
 } /* simple_format_test */

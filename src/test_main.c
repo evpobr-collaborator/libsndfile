@@ -16,11 +16,11 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#if defined (HAVE_SYS_TYPES_H) && (HAVE_SYS_TYPES_H == 1)
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #include <string.h>

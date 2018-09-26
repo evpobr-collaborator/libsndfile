@@ -17,7 +17,7 @@
 */
 
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -26,7 +26,7 @@
 #include <time.h>
 #include <math.h>
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #else
 #include "sf_unistd.h"
@@ -36,7 +36,7 @@
 #include "sfendian.h"
 #include "common.h"
 
-#if (ENABLE_EXPERIMENTAL_CODE && HAVE_EXTERNAL_XIPH_LIBS)
+#if (defined(ENABLE_EXPERIMENTAL_CODE) && defined(HAVE_EXTERNAL_XIPH_LIBS))
 
 #include <ogg/ogg.h>
 

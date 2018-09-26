@@ -51,7 +51,7 @@
 ** OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -60,7 +60,7 @@
 #include <time.h>
 #include <math.h>
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #else
 #include "sf_unistd.h"
@@ -70,7 +70,7 @@
 #include "sfendian.h"
 #include "common.h"
 
-#if HAVE_EXTERNAL_XIPH_LIBS
+#ifdef HAVE_EXTERNAL_XIPH_LIBS
 
 #include <ogg/ogg.h>
 #include <vorbis/codec.h>

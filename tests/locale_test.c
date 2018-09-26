@@ -16,19 +16,19 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #else
 #include "sf_unistd.h"
 #endif
 
-#if HAVE_LOCALE_H
+#ifdef HAVE_LOCALE_H
 #include <locale.h>
 #endif
 
@@ -125,7 +125,7 @@ utf8_test (void)
 static void
 locale_test (const LOCALE_DATA * ldata)
 {
-#if (HAVE_LOCALE_H == 0 || HAVE_SETLOCALE == 0)
+#if (!defined (HAVE_LOCALE_H) || !defined (HAVE_SETLOCALE))
 	locname = filename = NULL ;
 	width = 0 ;
 	return ;

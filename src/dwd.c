@@ -16,7 +16,7 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include	"sfconfig.h"
+#include	"config.h"
 
 #include	<stdio.h>
 #include	<fcntl.h>
@@ -27,7 +27,7 @@
 #include	"sfendian.h"
 #include	"common.h"
 
-#if (ENABLE_EXPERIMENTAL_CODE == 0)
+#ifndef ENABLE_EXPERIMENTAL_CODE
 
 int
 dwd_open	(SF_PRIVATE *psf)

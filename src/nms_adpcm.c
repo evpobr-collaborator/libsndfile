@@ -31,7 +31,7 @@
 ** size multiplier, as all operations on it remain in a log domain.
 */
 
-#include	"sfconfig.h"
+#include	"config.h"
 
 #include	<math.h>
 

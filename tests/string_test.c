@@ -16,7 +16,7 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +24,7 @@
 #include <math.h>
 #include <inttypes.h>
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #else
 #include "sf_unistd.h"
@@ -105,18 +105,22 @@ main (int argc, char *argv [])
 		} ;
 
 	if (do_all || ! strcmp (argv [1], "flac"))
-	{	if (HAVE_EXTERNAL_XIPH_LIBS)
-			string_start_test ("strings.flac", SF_FORMAT_FLAC) ;
-		else
-			puts ("    No FLAC tests because FLAC support was not compiled in.") ;
+	{
+#ifdef HAVE_EXTERNAL_XIPH_LIBS
+		string_start_test ("strings.flac", SF_FORMAT_FLAC) ;
+#else
+		puts ("    No FLAC tests because FLAC support was not compiled in.") ;
+#endif
 		test_count++ ;
 		} ;
 
 	if (do_all || ! strcmp (argv [1], "ogg"))
-	{	if (HAVE_EXTERNAL_XIPH_LIBS)
-			string_start_test ("vorbis.oga", SF_FORMAT_OGG) ;
-		else
-			puts ("    No Ogg/Vorbis tests because Ogg/Vorbis support was not compiled in.") ;
+	{
+#ifdef HAVE_EXTERNAL_XIPH_LIBS
+		string_start_test ("vorbis.oga", SF_FORMAT_OGG) ;
+#else
+		puts ("    No Ogg/Vorbis tests because Ogg/Vorbis support was not compiled in.") ;
+#endif
 		test_count++ ;
 		} ;
 

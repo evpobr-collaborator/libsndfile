@@ -17,7 +17,7 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -26,7 +26,7 @@
 #include <time.h>
 #include <math.h>
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #else
 #include "sf_unistd.h"
@@ -36,7 +36,7 @@
 #include "sfendian.h"
 #include "common.h"
 
-#if HAVE_EXTERNAL_XIPH_LIBS
+#ifdef HAVE_EXTERNAL_XIPH_LIBS
 
 #include <ogg/ogg.h>
 
@@ -160,7 +160,7 @@ ogg_open (SF_PRIVATE *psf)
 			psf->container_close = NULL ;
 			return flac_open (psf) ;
 
-#if ENABLE_EXPERIMENTAL_CODE
+#ifdef ENABLE_EXPERIMENTAL_CODE
 		case SF_FORMAT_OGG | SF_FORMAT_SPEEX :
 			return ogg_speex_open (psf) ;
 

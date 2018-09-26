@@ -19,7 +19,7 @@
 
 /* ADPCM: IMA, OKI <==> 16-bit PCM. */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <string.h>
 

@@ -23,7 +23,7 @@
 **	However, no code from that package was used.
 */
 
-#include	"sfconfig.h"
+#include	"config.h"
 
 #include	<stdio.h>
 #include	<fcntl.h>

@@ -19,13 +19,13 @@
 #ifndef SFENDIAN_INCLUDED
 #define SFENDIAN_INCLUDED
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdint.h>
 #include <inttypes.h>
 
 
-#if HAVE_BYTESWAP_H			/* Linux, any CPU */
+#ifdef HAVE_BYTESWAP_H			/* Linux, any CPU */
 #include <byteswap.h>
 
 #define	ENDSWAP_16(x)		(bswap_16 (x))
@@ -34,7 +34,7 @@
 #endif
 
 
-#if (HAVE_BYTESWAP_H == 0) && COMPILER_IS_GCC
+#if !defined (HAVE_BYTESWAP_H) && defined(COMPILER_IS_GCC)
 
 #if CPU_IS_X86
 
@@ -114,7 +114,7 @@ ENDSWAP_64 (uint64_t x)
 #elif (CPU_IS_BIG_ENDIAN == 1)
 	#define	MAKE_MARKER(a, b, c, d)		((uint32_t) ((((uint32_t) (a)) << 24) | ((b) << 16) | ((c) << 8) | (d)))
 #else
-	#error "Target CPU endian-ness unknown. May need to hand edit src/sfconfig.h"
+	#error "Target CPU endian-ness unknown. May need to hand edit src/config.h"
 #endif
 
 /*
@@ -153,7 +153,7 @@ ENDSWAP_64 (uint64_t x)
 	#define H2LE_32(x)			ENDSWAP_32 (x)
 
 #else
-	#error "Target CPU endian-ness unknown. May need to hand edit src/sfconfig.h"
+	#error "Target CPU endian-ness unknown. May need to hand edit src/config.h"
 #endif
 
 #define LET2H_16_PTR(x)			((x) [1] + ((x) [2] << 8))

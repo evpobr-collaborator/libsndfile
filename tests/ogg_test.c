@@ -16,12 +16,12 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #else
 #include "sf_unistd.h"
@@ -332,17 +332,17 @@ ogg_stereo_seek_test (const char * filename, int format)
 int
 main (void)
 {
-	if (HAVE_EXTERNAL_XIPH_LIBS)
-	{	ogg_short_test () ;
-		ogg_int_test () ;
-		ogg_float_test () ;
-		ogg_double_test () ;
+#ifdef HAVE_EXTERNAL_XIPH_LIBS
+	ogg_short_test () ;
+	ogg_int_test () ;
+	ogg_float_test () ;
+	ogg_double_test () ;
 
-		/*-ogg_stereo_seek_test ("pcm.wav", SF_FORMAT_WAV | SF_FORMAT_PCM_16) ;-*/
-		ogg_stereo_seek_test ("vorbis_seek.ogg", SF_FORMAT_OGG | SF_FORMAT_VORBIS) ;
-		}
-	else
-		puts ("    No Ogg/Vorbis tests because Ogg/Vorbis support was not compiled in.") ;
+	/*-ogg_stereo_seek_test ("pcm.wav", SF_FORMAT_WAV | SF_FORMAT_PCM_16) ;-*/
+	ogg_stereo_seek_test ("vorbis_seek.ogg", SF_FORMAT_OGG | SF_FORMAT_VORBIS) ;
+#else
+	puts ("    No Ogg/Vorbis tests because Ogg/Vorbis support was not compiled in.") ;
+#endif
 
 	return 0 ;
 } /* main */

@@ -20,7 +20,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #else
 #include "sf_unistd.h"
@@ -36,7 +36,7 @@
 
 #include "regtest.h"
 
-#if HAVE_SQLITE3
+#ifdef HAVE_SQLITE3
 
 #include <sqlite3.h>
 

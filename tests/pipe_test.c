@@ -20,13 +20,13 @@
 ** This is a test program which tests reading from and writing to pipes.
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#if (OS_IS_WIN32 || defined __OS2__ || HAVE_PIPE == 0 || HAVE_WAITPID == 0)
+#if (OS_IS_WIN32 || defined __OS2__ || !defined (HAVE_PIPE) || !defined (HAVE_WAITPID))
 
 int
 main (void)
@@ -37,7 +37,7 @@ main (void)
 
 #else
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 

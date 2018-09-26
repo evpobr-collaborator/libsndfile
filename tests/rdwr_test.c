@@ -16,7 +16,7 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,11 +25,11 @@
 #include <sys/stat.h>
 #include <math.h>
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#if (HAVE_DECL_S_IRGRP == 0)
+#ifndef HAVE_DECL_S_IRGRP
 #include <sf_unistd.h>
 #endif
 

@@ -22,7 +22,7 @@
 */
 
 
-#include "sfconfig.h"
+#include "config.h"
 
 #if OS_IS_WIN32
 #include <windows.h>

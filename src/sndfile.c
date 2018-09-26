@@ -16,7 +16,7 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include	"sfconfig.h"
+#include	"config.h"
 
 #include	<stdlib.h>
 #include	<string.h>
@@ -872,7 +872,7 @@ sf_format_check	(const SF_INFO *info)
 const char *
 sf_version_string (void)
 {
-#if	ENABLE_EXPERIMENTAL_CODE
+#ifdef	ENABLE_EXPERIMENTAL_CODE
 	return PACKAGE_NAME "-" PACKAGE_VERSION "-exp" ;
 #else
 	return PACKAGE_NAME "-" PACKAGE_VERSION ;

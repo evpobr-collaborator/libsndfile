@@ -27,7 +27,7 @@
 ** http://developer.apple.com/documentation/mac/MoreToolbox/MoreToolbox-99.html
 */
 
-#include	"sfconfig.h"
+#include	"config.h"
 
 #include	<stdio.h>
 #include	<stdlib.h>

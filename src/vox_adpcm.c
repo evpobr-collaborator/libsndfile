@@ -29,7 +29,7 @@
  * through a high-pass filter at e.g. 10Hz.
  */
 
-#include	"sfconfig.h"
+#include	"config.h"
 
 #include	<stdio.h>
 #include	<stdlib.h>

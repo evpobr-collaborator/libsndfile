@@ -22,7 +22,7 @@
 **		http://developer.apple.com/documentation/MusicAudio/Reference/CAFSpec/CAFSpec.pdf
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>

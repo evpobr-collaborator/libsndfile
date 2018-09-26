@@ -26,7 +26,7 @@
 ** Lidstrom and is copyright 1993 by NuEdge Development".
 */
 
-#include	"sfconfig.h"
+#include	"config.h"
 
 #include	<stdio.h>
 #include	<stdlib.h>

@@ -20,7 +20,7 @@
 **	A simple checksum for short, int and float data.
 */
 
-#include "sfconfig.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
