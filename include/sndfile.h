@@ -29,6 +29,8 @@
 /* This is the version 1.0.X header file. */
 #define	SNDFILE_1
 
+#include <sndfile_types.h>
+
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>
@@ -329,22 +331,6 @@ enum
 /* A SNDFILE* pointer can be passed around much like stdio.h's FILE* pointer. */
 
 typedef	struct SNDFILE_tag	SNDFILE ;
-
-/* The following typedef is system specific and is defined when libsndfile is
-** compiled. sf_count_t will be a 64 bit value when the underlying OS allows
-** 64 bit file offsets.
-** On windows, we need to allow the same header file to be compiler by both GCC
-** and the Microsoft compiler.
-*/
-
-#if (defined (_MSCVER) || defined (_MSC_VER) && (_MSC_VER < 1310))
-typedef __int64		sf_count_t ;
-#define SF_COUNT_MAX		0x7fffffffffffffffi64
-#else
-typedef @TYPEOF_SF_COUNT_T@	sf_count_t ;
-#define SF_COUNT_MAX		@SF_COUNT_MAX@
-#endif
-
 
 /* A pointer to a SF_INFO structure is passed to sf_open () and filled in.
 ** On write, the SF_INFO structure is filled in by the user and passed into

@@ -134,7 +134,7 @@ feature_summary (WHAT ALL)
 
 configure_file (src/config.h.cmake src/config.h)
 
-configure_file (include/sndfile.h.in include/sndfile.h)
+configure_file (include/sndfile_types.h.in include/sndfile_types.h)
 
 set (prefix ${CMAKE_INSTALL_PREFIX})
 set (exec_prefix "\$\{prefix\}")
@@ -152,8 +152,9 @@ configure_file (sndfile.pc.in sndfile.pc @ONLY)
 
 # Public libsndfile headers
 set (sndfile_HDRS
+	${CMAKE_CURRENT_BINARY_DIR}/include/sndfile_types.h
+	include/sndfile.h
 	include/sndfile.hh
-	${CMAKE_CURRENT_BINARY_DIR}/include/sndfile.h
 	)
 
 #
