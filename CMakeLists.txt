@@ -134,7 +134,7 @@ feature_summary (WHAT ALL)
 
 configure_file (src/config.h.cmake src/config.h)
 
-configure_file (src/sndfile.h.in src/sndfile.h)
+configure_file (include/sndfile.h.in include/sndfile.h)
 
 set (prefix ${CMAKE_INSTALL_PREFIX})
 set (exec_prefix "\$\{prefix\}")
@@ -152,8 +152,8 @@ configure_file (sndfile.pc.in sndfile.pc @ONLY)
 
 # Public libsndfile headers
 set (sndfile_HDRS
-	src/sndfile.hh
-	${CMAKE_CURRENT_BINARY_DIR}/src/sndfile.h
+	include/sndfile.hh
+	${CMAKE_CURRENT_BINARY_DIR}/include/sndfile.h
 	)
 
 #
@@ -277,9 +277,12 @@ add_library (sndfile
 
 target_include_directories(sndfile
 	PUBLIC
-		$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src>
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 		$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+	PRIVATE
+		src
+		${CMAKE_CURRENT_BINARY_DIR}/src
 	)
 target_link_libraries (sndfile
 	PRIVATE
@@ -393,6 +396,11 @@ if (BUILD_PROGRAMS)
 		$<$<BOOL:${BEOS}>:programs/sndfile-play-beos.cpp>
 		)
 	target_link_libraries (sndfile-play PRIVATE sndfile)
+	target_include_directories (sndfile-play
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 	if (WIN32)
 		target_link_libraries(sndfile-play PRIVATE winmm)
 	# Maybe ALSA & Sndio are present in BeOS. They are not required
@@ -421,6 +429,11 @@ if (BUILD_PROGRAMS)
 		programs/common.h
 		)
 	target_link_libraries (sndfile-cmp PRIVATE sndfile)
+	target_include_directories (sndfile-cmp
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 
 # sndfile-metadata-set
 
@@ -430,6 +443,11 @@ if (BUILD_PROGRAMS)
 		programs/common.h
 		)
 	target_link_libraries (sndfile-metadata-set PRIVATE sndfile)
+	target_include_directories (sndfile-metadata-set
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 
 # sndfile-metadata-get
 
@@ -439,6 +457,11 @@ if (BUILD_PROGRAMS)
 		programs/common.h
 		)
 	target_link_libraries (sndfile-metadata-get PRIVATE sndfile)
+	target_include_directories (sndfile-metadata-get
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 
 # sndfile-interleave
 
@@ -475,6 +498,11 @@ if (BUILD_PROGRAMS)
 		programs/common.h
 		)
 	target_link_libraries (sndfile-salvage PRIVATE sndfile)
+	target_include_directories (sndfile-salvage
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 
 	set (SNDFILE_PROGRAM_TARGETS
 		sndfile-info
@@ -571,6 +599,11 @@ if (BUILD_REGTEST)
 			sndfile
 			SQLite3::SQLite3
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (sndfile-regtest
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 
 endif ()
@@ -675,7 +708,12 @@ if (BUILD_TESTING)
 	# utils static library
 	add_library(test_utils STATIC tests/utils.c)
 	target_link_libraries(test_utils PRIVATE sndfile)
-	target_include_directories(test_utils PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/tests")
+	target_include_directories (test_utils
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+			${CMAKE_CURRENT_BINARY_DIR}/tests
+		)
 
 	### test_main
 
@@ -699,12 +737,21 @@ if (BUILD_TESTING)
 	if (MSVC)
 		target_compile_definitions (test_main PRIVATE _USE_MATH_DEFINES)
 	endif ()
+	target_include_directories (test_main
+		PRIVATE
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 	add_test (test_main test_main)
 
 	### sfversion_test
 
 	add_executable (sfversion tests/sfversion.c)
 	target_link_libraries (sfversion sndfile)
+	target_include_directories (sfversion
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 	add_test (sfversion sfversion)
 	set_tests_properties (sfversion PROPERTIES
 		PASS_REGULAR_EXPRESSION "${PACKAGE_NAME}-${CPACK_PACKAGE_VERSION_FULL}"
@@ -719,6 +766,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (error_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 	add_test (error_test error_test)
 
 	### ulaw_test
@@ -729,6 +781,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (ulaw_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 	add_test (ulaw_test ulaw_test)
 
 	### alaw_test
@@ -738,6 +795,11 @@ if (BUILD_TESTING)
 			sndfile
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (alaw_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 	add_test (alaw_test alaw_test)
 
@@ -750,6 +812,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (dwvw_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 	add_test (dwvw_test dwvw_test)
 
 	### command_test
@@ -760,6 +827,11 @@ if (BUILD_TESTING)
 			sndfile
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (command_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 	add_test (command_test command_test all)
 
@@ -775,7 +847,12 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
-	target_include_directories (floating_point_test PRIVATE tests)
+	target_include_directories (floating_point_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+			tests
+		)
 	add_test (floating_point_test floating_point_test)
 
 	### checksum_test
@@ -786,6 +863,11 @@ if (BUILD_TESTING)
 			sndfile
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (checksum_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 	add_test (checksum_test checksum_test)
 
@@ -798,6 +880,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (scale_clip_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 	add_test (scale_clip_test scale_clip_test)
 
 	### headerless_test
@@ -808,6 +895,11 @@ if (BUILD_TESTING)
 			sndfile
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (headerless_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 	add_test (headerless_test headerless_test)
 
@@ -820,6 +912,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (rdwr_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 	add_test (rdwr_test rdwr_test)
 
 	### locale_test
@@ -830,6 +927,11 @@ if (BUILD_TESTING)
 			sndfile
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (locale_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 	add_test (locale_test locale_test)
 
@@ -851,6 +953,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (cpp_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 	add_test (cpp_test cpp_test)
 
 	### external_libs_test
@@ -861,6 +968,11 @@ if (BUILD_TESTING)
 			sndfile
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (external_libs_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 	add_test (external_libs_test external_libs_test)
 
@@ -873,6 +985,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (format_check_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 	add_test (format_check_test format_check_test)
 
 	### channel_test
@@ -884,6 +1001,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (channel_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 	add_test (channel_test channel_test)
 
 	### pcm_test
@@ -894,6 +1016,11 @@ if (BUILD_TESTING)
 			sndfile
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (pcm_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 	add_test (pcm_test pcm_test)
 
@@ -909,7 +1036,12 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
-	target_include_directories (write_read_test PRIVATE tests)
+	target_include_directories (write_read_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+			tests
+		)
 
 	add_executable (lossy_comp_test tests/lossy_comp_test.c)
 	target_link_libraries (lossy_comp_test
@@ -917,6 +1049,11 @@ if (BUILD_TESTING)
 			sndfile
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (lossy_comp_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 
 	add_executable (peak_chunk_test tests/peak_chunk_test.c)
@@ -926,6 +1063,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (peak_chunk_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 
 	add_executable (header_test tests/header_test.c)
 	target_link_libraries (header_test
@@ -933,6 +1075,11 @@ if (BUILD_TESTING)
 			sndfile
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (header_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 
 	add_executable (misc_test tests/misc_test.c)
@@ -942,6 +1089,12 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (misc_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+			${CMAKE_CURRENT_BINARY_DIR}/tests
+		)
 
 	add_executable (string_test tests/string_test.c)
 	target_link_libraries (string_test
@@ -949,6 +1102,11 @@ if (BUILD_TESTING)
 			sndfile
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (string_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 
 	add_executable (multi_file_test tests/multi_file_test.c)
@@ -958,6 +1116,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (multi_file_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 
 	add_executable (aiff_rw_test tests/aiff_rw_test.c)
 	target_link_libraries (aiff_rw_test
@@ -965,6 +1128,11 @@ if (BUILD_TESTING)
 			sndfile
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (aiff_rw_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 
 	add_executable (chunk_test tests/chunk_test.c)
@@ -974,6 +1142,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (chunk_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 
 	add_executable (long_read_write_test tests/long_read_write_test.c)
 	target_link_libraries (long_read_write_test
@@ -981,6 +1154,11 @@ if (BUILD_TESTING)
 			sndfile
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (long_read_write_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 
 	add_executable (raw_test tests/raw_test.c)
@@ -990,6 +1168,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (raw_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 
 	add_executable (compression_size_test tests/compression_size_test.c)
 	target_link_libraries (compression_size_test
@@ -997,6 +1180,11 @@ if (BUILD_TESTING)
 			sndfile
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (compression_size_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 
 	add_executable (ogg_test tests/ogg_test.c)
@@ -1006,6 +1194,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (ogg_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 
 	add_executable (stdin_test tests/stdin_test.c)
 	target_link_libraries (stdin_test
@@ -1013,6 +1206,11 @@ if (BUILD_TESTING)
 			sndfile
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (stdin_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 	set_target_properties (stdin_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY "tests")
 
@@ -1023,6 +1221,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (stdout_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 	set_target_properties (stdout_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY "tests")
 
 	add_executable (stdio_test tests/stdio_test.c)
@@ -1032,6 +1235,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (stdio_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 
 	add_executable (pipe_test tests/pipe_test.c)
 	target_link_libraries (pipe_test
@@ -1039,6 +1247,11 @@ if (BUILD_TESTING)
 			sndfile
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (pipe_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 
 	add_executable (virtual_io_test tests/virtual_io_test.c)
@@ -1048,6 +1261,11 @@ if (BUILD_TESTING)
 			test_utils
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
+	target_include_directories (virtual_io_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
+		)
 
 	### g72x_test
 
@@ -1056,6 +1274,11 @@ if (BUILD_TESTING)
 		PRIVATE
 			sndfile
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
+		)
+	target_include_directories (g72x_test
+		PRIVATE
+			src
+			${CMAKE_CURRENT_BINARY_DIR}/src
 		)
 	add_test (g72x_test g72x_test all)
 
