@@ -306,7 +306,6 @@ target_link_libraries (sndfile
 	)
 set_target_properties (sndfile PROPERTIES
 	PUBLIC_HEADER "${sndfile_HDRS}"
-	C_VISIBILITY_PRESET hidden
 	)
 
 if (ENABLE_COMPATIBLE_LIBSNDFILE_NAME)
@@ -331,6 +330,7 @@ if (BUILD_SHARED_LIBS)
 	set_target_properties (sndfile PROPERTIES
 		SOVERSION ${PROJECT_VERSION_MAJOR}
 		VERSION ${PROJECT_VERSION}
+		C_VISIBILITY_PRESET hidden
 		)
 
 endif ()
