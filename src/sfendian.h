@@ -165,14 +165,14 @@ ENDSWAP_64 (uint64_t x)
 static inline void
 psf_put_be64 (uint8_t *ptr, int offset, int64_t value)
 {
-	ptr [offset] = value >> 56 ;
-	ptr [offset + 1] = value >> 48 ;
-	ptr [offset + 2] = value >> 40 ;
-	ptr [offset + 3] = value >> 32 ;
-	ptr [offset + 4] = value >> 24 ;
-	ptr [offset + 5] = value >> 16 ;
-	ptr [offset + 6] = value >> 8 ;
-	ptr [offset + 7] = value ;
+	ptr [offset] = (uint8_t) (value >> 56) ;
+	ptr [offset + 1] = (uint8_t) (value >> 48) ;
+	ptr [offset + 2] = (uint8_t) (value >> 40) ;
+	ptr [offset + 3] = (uint8_t) (value >> 32) ;
+	ptr [offset + 4] = (uint8_t) (value >> 24) ;
+	ptr [offset + 5] = (uint8_t) (value >> 16) ;
+	ptr [offset + 6] = (uint8_t) (value >> 8) ;
+	ptr [offset + 7] = (uint8_t) (value) ;
 } /* psf_put_be64 */
 
 static inline void
@@ -188,7 +188,7 @@ static inline void
 psf_put_be16 (uint8_t *ptr, int offset, int16_t value)
 {
 	ptr [offset] = value >> 8 ;
-	ptr [offset + 1] = value ;
+	ptr [offset + 1] = (uint8_t) value ;
 } /* psf_put_be16 */
 
 static inline int64_t
