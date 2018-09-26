@@ -41,6 +41,3 @@ install:
 
 script:
   - mkdir cmake-build && (cd cmake-build && cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-Wall -Wextra" && make VERBOSE=1 && ctest -V)
-  - pwd
-  - ./autogen.sh
-  - ./configure --enable-werror && make clean all check && make distcheck
