@@ -32,6 +32,7 @@
 #include <sndfile_types.h>
 #include <sndfile_export.h>
 
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
 
