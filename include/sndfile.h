@@ -33,7 +33,6 @@
 #include <sndfile_export.h>
 
 #include <stdio.h>
-#include <stdint.h>
 #include <sys/types.h>
 
 #ifdef __cplusplus
