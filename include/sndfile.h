@@ -331,7 +331,7 @@ enum
 
 /* A SNDFILE* pointer can be passed around much like stdio.h's FILE* pointer. */
 
-typedef	struct SNDFILE_tag	SNDFILE ;
+typedef	struct SF_PRIVATE	SNDFILE ;
 
 /* A pointer to a SF_INFO structure is passed to sf_open () and filled in.
 ** On write, the SF_INFO structure is filled in by the user and passed into

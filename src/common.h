@@ -382,7 +382,7 @@ typedef union
 
 
 
-typedef struct sf_private_tag
+typedef struct SF_PRIVATE
 {
 	/* Canary in a coal mine. */
 	union
@@ -507,27 +507,27 @@ typedef struct sf_private_tag
 	int				ieee_replace ;
 
 	/* A set of file specific function pointers */
-	sf_count_t		(*read_short)	(struct sf_private_tag*, short *ptr, sf_count_t len) ;
-	sf_count_t		(*read_int)		(struct sf_private_tag*, int *ptr, sf_count_t len) ;
-	sf_count_t		(*read_float)	(struct sf_private_tag*, float *ptr, sf_count_t len) ;
-	sf_count_t		(*read_double)	(struct sf_private_tag*, double *ptr, sf_count_t len) ;
+	sf_count_t		(*read_short)	(SNDFILE *, short *ptr, sf_count_t len) ;
+	sf_count_t		(*read_int)		(SNDFILE *, int *ptr, sf_count_t len) ;
+	sf_count_t		(*read_float)	(SNDFILE *, float *ptr, sf_count_t len) ;
+	sf_count_t		(*read_double)	(SNDFILE *, double *ptr, sf_count_t len) ;
 
-	sf_count_t		(*write_short)	(struct sf_private_tag*, const short *ptr, sf_count_t len) ;
-	sf_count_t		(*write_int)	(struct sf_private_tag*, const int *ptr, sf_count_t len) ;
-	sf_count_t		(*write_float)	(struct sf_private_tag*, const float *ptr, sf_count_t len) ;
-	sf_count_t		(*write_double)	(struct sf_private_tag*, const double *ptr, sf_count_t len) ;
+	sf_count_t		(*write_short)	(SNDFILE *, const short *ptr, sf_count_t len) ;
+	sf_count_t		(*write_int)	(SNDFILE *, const int *ptr, sf_count_t len) ;
+	sf_count_t		(*write_float)	(SNDFILE *, const float *ptr, sf_count_t len) ;
+	sf_count_t		(*write_double)	(SNDFILE *, const double *ptr, sf_count_t len) ;
 
-	sf_count_t		(*seek) 		(struct sf_private_tag*, int mode, sf_count_t samples_from_start) ;
-	int				(*write_header)	(struct sf_private_tag*, int calc_length) ;
-	int				(*command)		(struct sf_private_tag*, int command, void *data, int datasize) ;
-	int				(*byterate)		(struct sf_private_tag*) ;
+	sf_count_t		(*seek) 		(SNDFILE *, int mode, sf_count_t samples_from_start) ;
+	int				(*write_header)	(SNDFILE *, int calc_length) ;
+	int				(*command)		(SNDFILE *, int command, void *data, int datasize) ;
+	int				(*byterate)		(SNDFILE *) ;
 
 	/*
 	**	Separate close functions for the codec and the container.
 	**	The codec close function is always called first.
 	*/
-	int				(*codec_close)		(struct sf_private_tag*) ;
-	int				(*container_close)	(struct sf_private_tag*) ;
+	int				(*codec_close)		(SNDFILE *) ;
+	int				(*container_close)	(SNDFILE *) ;
 
 	char			*format_desc ;
 
@@ -542,10 +542,10 @@ typedef struct sf_private_tag
 	READ_CHUNKS			rchunks ;
 	WRITE_CHUNKS		wchunks ;
 
-	int					(*set_chunk)		(struct sf_private_tag*, const SF_CHUNK_INFO * chunk_info) ;
-	SF_CHUNK_ITERATOR *	(*next_chunk_iterator)	(struct sf_private_tag*, SF_CHUNK_ITERATOR * iterator) ;
-	int					(*get_chunk_size)	(struct sf_private_tag*, const SF_CHUNK_ITERATOR * iterator, SF_CHUNK_INFO * chunk_info) ;
-	int					(*get_chunk_data)	(struct sf_private_tag*, const SF_CHUNK_ITERATOR * iterator, SF_CHUNK_INFO * chunk_info) ;
+	int					(*set_chunk)		(SNDFILE *, const SF_CHUNK_INFO * chunk_info) ;
+	SF_CHUNK_ITERATOR *	(*next_chunk_iterator)	(SNDFILE *, SF_CHUNK_ITERATOR * iterator) ;
+	int					(*get_chunk_size)	(SNDFILE *, const SF_CHUNK_ITERATOR * iterator, SF_CHUNK_INFO * chunk_info) ;
+	int					(*get_chunk_data)	(SNDFILE *, const SF_CHUNK_ITERATOR * iterator, SF_CHUNK_INFO * chunk_info) ;
 } SF_PRIVATE ;
 
 
