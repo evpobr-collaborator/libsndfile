@@ -325,6 +325,13 @@ SNDFILE*
 sf_open	(const char *path, int mode, SF_INFO *sfinfo)
 {	SF_PRIVATE 	*psf ;
 
+#if OS_IS_WIN32
+
+	if (mode & SFM_UTF8)
+		return sf_utf8_open(path, mode, sfinfo) ;
+
+#endif
+
 	/* Ultimate sanity check. */
 	assert (sizeof (sf_count_t) == 8) ;
 

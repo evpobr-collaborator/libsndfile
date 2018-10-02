@@ -129,6 +129,11 @@ will use the filesystem character set.
 On Windows, there is also a Windows specific sf_wchar_open() that takes a
 UTF16_BE encoded filename.
 </P>
+<P>
+With <CODE>SFM_UTF8</CODE> parameter (Windows only) you can pass UTF-8 encoded 
+<CODE>path</CODE> to <CODE>sf_open</CODE> function. This flag is useful if your
+application uses UTF-8 encoding internally.
+</P>
 
 <PRE>
       SNDFILE*  sf_wchar_open (LPCWSTR wpath, int mode, SF_INFO *sfinfo) ;
@@ -158,6 +163,7 @@ The mode parameter for this function can be any one of the following three value
       SFM_READ    - read only mode
       SFM_WRITE   - write only mode
       SFM_RDWR    - read/write mode
+      SFM_RDWR    - Treat path as UTF-8 string
 </PRE>
 
 <P>

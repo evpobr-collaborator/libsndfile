@@ -1000,6 +1000,10 @@ psf_strlcpy (char *dest, size_t n, const char *src)
 ** Other helper functions.
 */
 
+#if OS_IS_WIN32
+SNDFILE* sf_utf8_open (const char *path, int mode, SF_INFO *sfinfo) ;
+#endif
+
 void	*psf_memset (void *s, int c, sf_count_t n) ;
 
 SF_CUES * psf_cues_dup (const void * ptr) ;

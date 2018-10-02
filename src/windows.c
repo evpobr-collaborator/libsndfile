@@ -61,6 +61,14 @@ sf_wchar_open (LPCWSTR wpath, int mode, SF_INFO *sfinfo)
 	return psf_open_file (psf, sfinfo) ;
 } /* sf_wchar_open */
 
+SNDFILE*
+sf_utf8_open (const char *path, int mode, SF_INFO *sfinfo)
+{	wchar_t wpath [512] ;
+
+	MultiByteToWideChar(CP_UTF8, 0, path, -1, wpath, ARRAYSIZE(wpath));
+	return sf_wchar_open (wpath, mode, sfinfo) ;
+} /* sf_utf8_open */
+
 
 static void
 copy_filename (SF_PRIVATE *psf, LPCWSTR wpath)
