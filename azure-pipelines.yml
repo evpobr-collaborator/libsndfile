@@ -1,0 +1,23 @@
+jobs:
+  - job: Ubuntu_CMake
+    pool:
+      vmImage: 'Ubuntu-16.04'
+    steps:
+    - script: |
+        sudo apt-get install -y autogen libogg-dev libvorbis-dev libflac-dev libasound2-dev libsqlite3-dev
+      displayName: Installing dependencies
+    steps:
+    - script: |
+        mkdir build
+      displayName: Creating build directory
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build'
+        cmakeArgs: '-DBUILD_SHARED_LIBS=ON ..'
+    - script: |
+        cd build
+        cmake --build .
+      displayName: Building
+    - script: |
+        ctest
+      displayName: Testing
