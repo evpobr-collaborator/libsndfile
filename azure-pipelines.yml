@@ -12,7 +12,7 @@ jobs:
     - task: CMake@1
       inputs:
         workingDirectory: 'build'
-        cmakeArgs: '-DBUILD_SHARED_LIBS=ON ..'
+        cmakeArgs: ' ..'
     - script: |
         cd build
         cmake --build .
