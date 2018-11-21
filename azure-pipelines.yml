@@ -18,5 +18,6 @@ jobs:
         cmake --build .
       displayName: Building
     - script: |
+        cd build
         ctest
       displayName: Testing
