@@ -21,6 +21,24 @@ jobs:
         cd build
         ctest
       displayName: Testing
+
+  - job: Ubuntu_AutoTools
+    pool:
+      vmImage: 'Ubuntu-16.04'
+    steps:
+    - script: sudo apt-get install -y autogen libogg-dev libvorbis-dev libflac-dev libasound2-dev libsqlite3-dev libspeex-dev
+      displayName: Installing dependencies
+    - script: ./autogen.sh
+      displayName: Bootstrapping
+    - script: ./configure --enable-werror
+      displayName: Configuring
+    - script: make all
+      displayName: Building
+    - script: make check
+      displayName: Testing
+    - script: make distcheck
+      displayName: Testing distribution
+
   - job: Windows_CMake_VS2017_Win32
     pool:
       vmImage: 'vs2017-win2016'
