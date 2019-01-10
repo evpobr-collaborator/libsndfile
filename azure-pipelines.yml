@@ -54,7 +54,7 @@ jobs:
       displayName: Bootstraping Vcpkg
     - script: .\vcpkg\bootstrap-vcpkg.bat
       displayName: Bootstraping Vcpkg
-    - script: .\vcpkg\vcpkg.exe install:x64-windows libogg:x64-windows libvorbis:x64-windows libflac:x64-windows sqlite3:x64-windows speex:x64-windows
+    - script: .\vcpkg\vcpkg.exe install libogg:x64-windows libvorbis:x64-windows libflac:x64-windows sqlite3:x64-windows speex:x64-windows
       displayName: Installing dependencies
     - script: |
         mkdir build
