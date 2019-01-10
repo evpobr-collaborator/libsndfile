@@ -71,3 +71,27 @@ jobs:
         cd build
         ctest
       displayName: Testing
+  - job: MacOS
+    pool:
+      vmImage: 'macOS-10.13'
+    steps:
+    - script: |
+        brew update
+        brew install autogen libogg libvorbis flac sqlite3 speex
+      displayName: Installing dependencies
+    - script: |
+        mkdir build
+      displayName: Creating build directory
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build'
+        cmakeArgs: ' ..'
+    - script: |
+        cd build
+        cmake --build .
+      displayName: Building
+    - script: |
+        cd build
+        ctest
+      displayName: Testing
+     
