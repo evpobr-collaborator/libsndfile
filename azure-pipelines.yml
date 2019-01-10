@@ -21,3 +21,27 @@ jobs:
         cd build
         ctest
       displayName: Testing
+jobs:
+  - job: Windows_CMake_VS2017_Win32
+    pool:
+      vmImage: 'vs2017-win2016'
+    steps:
+    - script: .\vcpkg\bootstrap-vcpkg.bat
+      displayName: Bootstraping Vcpkg
+    - script: .\vcpkg\vcpkg.exe install libogg libvorbis libflac sqlite3 speex
+      displayName: Installing dependencies
+    - script: |
+        mkdir build
+      displayName: Creating build directory
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build'
+        cmakeArgs: ' -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+    - script: |
+        cd build
+        cmake --build .
+      displayName: Building
+    - script: |
+        cd build
+        ctest
+      displayName: Testing
