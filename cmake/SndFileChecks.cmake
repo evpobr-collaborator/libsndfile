@@ -29,6 +29,7 @@ endif ()
 
 find_package (VorbisEnc)
 find_package (FLAC)
+
 if (VORBIS_FOUND AND FLAC_FOUND)
 	set (HAVE_EXTERNAL_XIPH_LIBS 1)
 else ()
@@ -37,6 +38,8 @@ endif ()
 
 find_package (Speex)
 find_package (SQLite3)
+
+find_package (Check)
 
 check_include_file (byteswap.h		HAVE_BYTESWAP_H)
 check_include_file (dlfcn.h			HAVE_DLFCN_H)
