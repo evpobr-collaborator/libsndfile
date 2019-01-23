@@ -710,7 +710,9 @@ if (BUILD_TESTING)
 		src/test_binheader_writef.c
 		src/test_nms_adpcm.c
 		)
-	target_link_libraries (test_main PRIVATE sndfile)
+	target_include_directories (test_main PRIVATE ${CHECK_INCLUDE_DIRS})
+	target_link_libraries (test_main PRIVATE sndfile ${CHECK_LIBRARIES})
+	target_compile_definitions (test_main PRIVATE ${CHECK_DEFINITIONS})
 	if (MSVC)
 		target_compile_definitions (test_main PRIVATE _USE_MATH_DEFINES)
 	endif ()
