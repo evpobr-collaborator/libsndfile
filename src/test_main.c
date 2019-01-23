@@ -27,6 +27,8 @@
 #include <stdarg.h>
 #include <errno.h>
 
+#include <check.h>
+
 #include "test_main.h"
 
 static void

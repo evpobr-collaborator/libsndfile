@@ -16,6 +16,8 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
+#include <check.h>
+
 static inline void
 print_test_name (const char * name)
 {	printf ("    %-40s : ", name) ;
