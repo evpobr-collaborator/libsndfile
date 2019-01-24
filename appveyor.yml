@@ -5,11 +5,18 @@ platform:
   - Win32
   - x64
 install:
-  - pip3 install conan
+
+  - cmmd: echo "Downloading conan..."
+  - cmmd: set PATH=%PATH%;%PYTHON%/Scripts/
+  - cmmd: pip.exe install conan
+  - cmmd: conan user # Create the conan data directory
+  - cmmd: conan --version
 before_build:
   - mkdir CMakeBuild
   - cd CMakeBuild
-  - conan install ..
+  - if %platform%==Win32 set CONAN_ARCH=x86
+  - if %platform%==x64 set CONAN_ARCH=x86_64
+  - conan install .. --build=missing -s arch=x86
   - if %platform%==Win32 set CMAKE_GENERATOR=Visual Studio 15 2017
   - if %platform%==x64 set CMAKE_GENERATOR=Visual Studio 15 2017 Win64
   - cmake .. -G"%CMAKE_GENERATOR%"
