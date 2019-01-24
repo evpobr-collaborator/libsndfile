@@ -1,0 +1,8 @@
+[requires]
+ogg/1.3.3@bincrafters/stable
+vorbis/1.3.6@bincrafters/stable
+flac/1.3.2@bincrafters/stable
+sqlite3/3.26.0@bincrafters/stable
+
+ [generators]
+ cmake

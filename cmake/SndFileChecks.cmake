@@ -9,6 +9,10 @@ include (TestInline)
 include (ClipMode)
 include(TestLargeFiles)
 
+if (EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+	include (${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+endif ()
+
 test_large_files (_LARGEFILES)
 
 if (LARGE_FILES_DEFINITIONS)
