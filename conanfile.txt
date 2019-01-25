@@ -6,3 +6,4 @@ sqlite3/3.26.0@bincrafters/stable
 
  [generators]
  cmake
+ 

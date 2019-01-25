@@ -285,8 +285,7 @@ target_include_directories(sndfile
 target_link_libraries (sndfile
 	PRIVATE
 		$<$<BOOL:${LIBM_REQUIRED}>:m>
-		$<$<BOOL:${HAVE_EXTERNAL_XIPH_LIBS}>:Vorbis::VorbisEnc>
-		$<$<BOOL:${HAVE_EXTERNAL_XIPH_LIBS}>:FLAC::FLAC>
+		$<$<BOOL:${HAVE_EXTERNAL_XIPH_LIBS}>:"${EXTERNAL_XIPH_LIBS}">
 		$<$<AND:$<BOOL:${ENABLE_EXPERIMENTAL}>,$<BOOL:${HAVE_EXTERNAL_XIPH_LIBS}>,$<BOOL:${HAVE_SPEEX}>>:Speex::Speex>
 	)
 set_target_properties (sndfile PROPERTIES
@@ -543,7 +542,7 @@ if (BUILD_REGTEST)
 	target_link_libraries(sndfile-regtest
 		PRIVATE
 			sndfile
-			SQLite3::SQLite3
+			${SQLITE3_TARGET}
 			$<$<BOOL:${LIBM_REQUIRED}>:m>
 		)
 
